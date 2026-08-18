@@ -55,7 +55,7 @@
 /*!
  * Defines the application data transmission duty cycle. 5s, value in [ms].
  */
-#define APP_TX_DUTYCYCLE                            5000
+#define APP_TX_DUTYCYCLE                            60000
 
 /*!
  * Defines a random delay for application data transmission duty cycle. 1s,
@@ -238,7 +238,7 @@ static LmhpComplianceParams_t LmhpComplianceParams =
  */
 static volatile uint8_t IsMacProcessPending = 0;
 
-static volatile uint8_t IsTxFramePending = 0;
+volatile uint8_t IsTxFramePending = 0;
 
 static volatile uint32_t TxPeriodicity = 0;
 
@@ -455,7 +455,9 @@ static void PrepareTxFrame( void )
 
     CayenneLppReset( );
     CayenneLppAddDigitalInput( channel++, AppLedStateOn );
-    CayenneLppAddAnalogInput( channel++, BoardGetBatteryLevel( ) * 100 / 254 );
+    CayenneLppAddAnalogInput(  channel++, BoardGetBatteryLevel( ) * 100 / 254 );
+    CayenneLppAddTemperature(  channel++, ( float )BoardReadNtcTemperatureX10( ) / 10.0f );
+    CayenneLppAddAnalogInput(  channel++, ( float )BoardReadLdrLightLevel( ) );
 
     CayenneLppCopy( AppData.Buffer );
     AppData.BufferSize = CayenneLppGetSize( );

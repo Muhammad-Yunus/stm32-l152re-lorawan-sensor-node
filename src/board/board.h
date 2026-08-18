@@ -125,6 +125,11 @@ uint8_t GetBoardPowerSource( void );
  */
 Version_t BoardGetVersion( void );
 
+int16_t BoardReadNtcTemperatureX10( void );
+uint8_t BoardReadLdrLightLevel( void );
+uint16_t BoardReadNtcRawAdc( void );
+void    BoardInitPirSensor( void );
+
 #ifdef __cplusplus
 }
 #endif

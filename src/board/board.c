@@ -21,7 +21,9 @@
  * \author    Gregory Cristian ( Semtech )
  */
 #include "stm32l1xx.h"
+#include <math.h>
 #include "utilities.h"
+#include "gpio-board.h"
 #include "gpio.h"
 #include "adc.h"
 #include "spi.h"
@@ -114,7 +116,6 @@ void BoardCriticalSectionEnd( uint32_t *mask )
 
 void BoardInitPeriph( void )
 {
-
 }
 
 void BoardInitMcu( void )
@@ -152,6 +153,7 @@ void BoardInitMcu( void )
     }
 
     AdcInit( &Adc, NC );  // Just initialize ADC
+    BoardInitPirSensor( );
 
 #if defined( SX1261MBXBAS ) || defined( SX1262MBXCAS ) || defined( SX1262MBXDAS )
     SpiInit( &SX126x.Spi, SPI_1, RADIO_MOSI, RADIO_MISO, RADIO_SCLK, NC );
@@ -334,6 +336,70 @@ int16_t BoardGetTemperature( void )
 
     // Compute and return the temperature in degree celcius * 256
     return ( int16_t ) COMPUTE_TEMPERATURE( tempRaw, BatteryVoltage );
+}
+
+static Gpio_t NtcAdcPin;
+static Gpio_t LdrAdcPin;
+static Gpio_t PirMotion;
+
+/*!
+ * PIR motion EXTI callback — sets transmit pending flag
+ */
+static void PirMotionIsr( void* context )
+{
+    extern volatile uint8_t IsTxFramePending;
+    IsTxFramePending = 1;
+}
+
+void BoardInitPirSensor( void )
+{
+    GpioInit( &PirMotion, SENSOR_PIR_MOTION_PIN, PIN_INPUT, PIN_PUSH_PULL, PIN_NO_PULL, 0 );
+    GpioMcuSetInterrupt( &PirMotion, IRQ_RISING_EDGE, IRQ_LOW_PRIORITY, PirMotionIsr );
+}
+
+/* Global variable for debug: last raw ADC reading */
+static volatile uint16_t NtcDebugAdcRaw = 0;
+
+int16_t BoardReadNtcTemperatureX10( void )
+{
+    /* Seeed Grove Temperature Sensor V1.1: NCP18WF104F03RC (100kΩ, B=4250)
+     * Module wiring: NTC on TOP (VDD), 10kΩ pull-down to GND.
+     *   Vadc = VDD * R_PULLUP / (R_NTC + R_PULLUP)
+     *   =>  R_NTC = R_PULLUP * (4095 - adc) / adc
+     */
+    GpioInit( &NtcAdcPin, SENSOR_NTC_TEMP_PIN, PIN_ANALOGIC, PIN_PUSH_PULL, PIN_NO_PULL, 0 );
+    uint16_t adcRaw = AdcReadChannel( &Adc, ADC_CHANNEL_14 );
+    NtcDebugAdcRaw = adcRaw;  /* store for debug */
+    if( adcRaw == 0 || adcRaw >= 4095 )
+    {
+        return -2730;  /* sensor fault / out of range */
+    }
+    /* User-corrected formula (VCC=3.3V, R_fixed=100kΩ from measurement 01D):
+     *   resistance = R_fixed * ((4095 / adc) - 1)
+     *   temperature = 1 / (log(R/100k) / B + 1/298.15) - 273.15
+     * Compensation: Grove module op-amp attenuation factor
+     */
+    float adcEffective = ( float )adcRaw * NTC_ATTENUATION_FACTOR;
+    if( adcEffective > 4095.0f ) { adcEffective = 4095.0f; }
+    float rNtc  = NTC_R_PULLUP * ( ( 4095.0f / adcEffective ) - 1.0f );
+    float lnRatio = logf( rNtc / NTC_R_NOMINAL );
+    float invT    = ( 1.0f / ( NTC_T_NOMINAL_C + 273.15f ) ) + ( lnRatio / NTC_BETA );
+    float tempC   = ( 1.0f / invT ) - 273.15f;
+    return ( int16_t )( tempC * 10.0f );
+}
+
+/* Debug: return raw ADC value for NTC sensor */
+uint16_t BoardReadNtcRawAdc( void )
+{
+    GpioInit( &NtcAdcPin, SENSOR_NTC_TEMP_PIN, PIN_ANALOGIC, PIN_PUSH_PULL, PIN_NO_PULL, 0 );
+    return NtcDebugAdcRaw;  /* return cached value from last temp read */
+}
+
+uint8_t BoardReadLdrLightLevel( void )
+{
+    GpioInit( &LdrAdcPin, SENSOR_LDR_LIGHT_PIN, PIN_ANALOGIC, PIN_PUSH_PULL, PIN_NO_PULL, 0 );
+    uint16_t adcRaw = AdcReadChannel( &Adc, ADC_CHANNEL_1 );
+    return ( uint8_t )( adcRaw * 100u / 4095u );
 }
 
 static void BoardUnusedIoInit( void )

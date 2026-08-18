@@ -128,4 +128,24 @@ extern "C"
 }
 #endif
 
+/*!
+ * External sensor pin definitions
+ */
+#define SENSOR_NTC_TEMP_PIN                        PC_1   /* ADC_CHANNEL_14 (test for conflict) */
+#define SENSOR_LDR_LIGHT_PIN                       PA_1   /* ADC_CHANNEL_1  (Arduino A1) */
+#define SENSOR_PIR_MOTION_PIN                      PA_4   /* EXTI4          (Arduino A2) */
+
+/*!
+ * Steinhart-Hart NTC parameters (Seeed Studio Grove Temperature Sensor V1.1)
+ * NTC part: NCP18WF104F03RC (100kΩ @ 25°C, B=4250)
+ * Module: NTC to VDD (top), R1=100kΩ (01D) to GND (bottom)
+ * Grove formula: R_ntc = R_fixed * (4095 - adc) / adc
+ * Note: Grove module has internal op-amp with ~2.64x attenuation factor
+ */
+#define NTC_R_NOMINAL                              10000.0f   /* Ohms at T_NOMINAL_C - Seeed Grove V1.2 internal NTC */
+#define NTC_BETA                                   4275.0f    /* Beta coefficient (K) - Seeed spec */
+#define NTC_T_NOMINAL_C                            25.0f      /* Nominal temperature (°C) */
+#define NTC_R_PULLUP                               10000.0f   /* Seeed Grove V1.2 internal 10kΩ pull-up resistor */
+#define NTC_ATTENUATION_FACTOR                     1.0f       /* No attenuation - direct voltage divider */
+
 #endif // __BOARD_CONFIG_H__
