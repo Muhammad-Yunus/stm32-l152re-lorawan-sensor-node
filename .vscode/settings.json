@@ -1,0 +1,7 @@
+{
+  "cmake.configureSettings": {
+    "CMAKE_TOOLCHAIN_FILE": "cmake/toolchain-arm-none-eabi.cmake",
+    "CLASSB_ENABLED": "ON"
+  },
+  "cmake.buildBeforeRun": true
+}
