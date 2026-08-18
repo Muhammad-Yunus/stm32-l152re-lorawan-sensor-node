@@ -1,31 +1,160 @@
 # STM32L152RE LoRaWAN Sensor Node
 
-LoRaWAN sensor node firmware for **STM32L152RE** with **SX1276** radio, targeting AS923 region.
-Built on Semtech's LoRaMac-node library.
+> Low-power LoRaWAN sensor node firmware for **STM32L152RE** + **SX1276** radio, targeting **AS923** region.
+> Built on [Semtech's LoRaMac-node](https://github.com/Lora-net/LoRaMac-node) stack.
 
-## Hardware
+[![LoRaWAN](https://img.shields.io/badge/LoRaWAN-1.0.x-blue?logo=semtech)](https://lora-alliance.org/)
+[![Region](https://img.shields.io/badge/Region-AS923-green)](#)
+[![MCU](https://img.shields.io/badge/MCU-STM32L152RE-orange)](#)
+[![Radio](https://img.shields.io/badge/Radio-SX1276-yellow)](#)
+[![Language](https://img.shields.io/badge/Language-C-00599C?logo=c)](#)
+[![Build](https://img.shields.io/badge/Build-CMake-273d6e?logo=cmake)](#)
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](#-license)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-lightgrey)](#)
+
+---
+
+## 📋 Overview
+
+This project is a bare-metal LoRaWAN end-device firmware running on an STM32L152RET6 microcontroller communicating via an SX1276 LoRa radio module. It supports **OTAA** join procedure and periodic uplink transmission using **Cayenne LPP** payload encoding.
+
+### Key Features
+
+- **LoRaWAN 1.0.x** stack (LmHandler framework)
+- **OTAA** device activation with Soft-SE crypto (no hardware secure element required)
+- **Cayenne LPP** payload encoding for multi-sensor data
+- **Class A** default with **Class B** clock-sync support
+- **AS923** regional parameters (changeable to EU868, US915, etc.)
+- Ultra-low power STM32L152 (Cortex-M3, sub-µA sleep current)
+- Dual-bank 512 KB flash with runtime firmware version tracking
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Application Layer                         │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────┐  │
+│  │ main.c       │  │ CayenneLpp   │  │ LmHandler (stack     │  │
+│  │              │  │ encoder      │  │  handler/adaptor)    │  │
+│  │ OTAA join    │  │              │  │                      │  │
+│  │ Periodic tx  │  │ JSON↔LPP   │  │ RX callbacks,       │  │
+│  │ CLI console  │  │ encoding   │  │  duty-cycle mgmt     │  │
+│  └──────┬───────┘  └──────┬───────┘  └──────────┬───────────┘  │
+├─────────┼─────────────────┼──────────────────────┼───────────────┤
+│ LoRaMAC │◄────────────────►│◄─────────────────────►│◄────────────┤
+│ Stack   │  LmHandlerMsg    │  Commissioning       │  NVM Data   │
+│         │  Display        │  Parameters          │  Management │
+│  ┌──────┴─────────────────┴──────────────────────┴─────────────┐│
+│  │  LoRaMac Core                                                ││
+│  │  ├─Adr, ClassB, Commands, Crypto, Header, Parser            ││
+│  │  └─ Region Common + RegionAS923                              ││
+│  └──────────────────────────────────────────────────────────────┘│
+├────────────��─────────────────────────────────────────────────────┤
+│                    Hardware Abstraction                          │
+│  ┌─────────────┐  ┌─────────────┐  ┌──────────────────────────┐ │
+│  │ Board       │  │ Radio       │  │ Peripherals              │ │
+│  │ (HAL, GPIO, │  │ (SX1276     │  │ (Soft-SE, AES, CMAC)    │ │
+│  │  UART, I2C, │  │  driver)    │  │                          │ │
+│  │  SPI, ADC,  │  │             │  │  AES-128 / CMAC-128     │ │
+│  │  RTC, LPm)  │  │  SPI, IRQ,  │  │  key derivation         │ │
+│  │             │  │  TX/RX     │  │                          │ │
+│  └─────────────┘  └─────────────┘  └──────────────────────────┘ │
+├──────────────────────────────────────────────────────────────────┤
+│                    CMSIS / HAL (STM32L1xx)                       │
+│  core_cm3.h · stm32l152xe.h · stm32l1xx_hal_*.c                 │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🛠️ Hardware
 
 | Component      | Part                                      |
 |---------------|-------------------------------------------|
-| MCU           | STM32L152RET6 (Cortex-M3, 512KB Flash)   |
-| Radio         | SX1276MB1LAS (SX1276, 868 MHz)           |
-| Debugger      | ST-LINK/V2 (on-board)                    |
-| Board         | Custom PCB                                |
+| **MCU**       | STM32L152RET6 (Cortex-M3, 512 KB Flash, 120 KB RAM) |
+| **Radio**     | SX1276MB1LAS breakout (SX1276, AS923 868 MHz) |
+| **Debugger**  | ST-LINK/V2 (on-board)                    |
+| **Board**     | Custom PCB                               |
 
-## Toolchain
+### Pin Mapping
 
-| Tool        | Version (verified)                          | Location                                    |
-|-------------|---------------------------------------------|---------------------------------------------|
-| CMake       | ≥ 3.6                                       | system PATH                                 |
-| arm-none-eabi-gcc | 13.3.1 (`GNU Tools for STM32 13.3.rel1`) | `C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/` |
-| OpenOCD     | 0.12.0+dev (STMicroelectronics build)       | `C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.openocd.win32_2.4.300.202509300731/tools/bin/openocd.exe` |
-| STM32CubeProgrammer | (optional)                            | `C:/Program Files/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe` |
+| Peripheral | Pin      |
+|------------|----------|
+| SPI1       | PA5 (SCK) / PA6 (MISO) / PA7 (MOSI) |
+| SX1276 NSS | PB13     |
+| SX1276 DIO0| PA0      |
+| SX1276 DIO1| PA1      |
+| SX1276 DIO2| PA2      |
+| SX1276 DIO5| PA3      |
+| UART1 TX   | PA9      |
+| UART1 RX   | PA10     |
+| I2C1       | PB6 (SCL) / PB7 (SDA) |
+| ADC1       | PC0      |
 
-> **Note:** `arm-none-eabi-*` binaries are in `tools/bin/` directly, NOT in `tools/arm-none-eabi/bin/`.
+---
 
-## Build
+## 📂 Project Structure
 
-### Windows (PowerShell, MSYS2, or Git Bash)
+```
+stm32-l152re-lorawan-sensor-node/
+├── CMakeLists.txt               # Top-level CMake config
+├── openocd.cfg                  # OpenOCD target config
+├── .vscode/
+│   ├── launch.json              # Cortex-Debug configuration
+│   └── settings.json            # CMake toolchain path
+├── cmake/
+│   ├── toolchain-arm-none-eabi.cmake
+│   └── stm32l1.cmake            # STM32L1-specific settings
+└── src/
+    ├── app/                     # Application layer
+    │   ├── sensor-node/
+    │   │   └── main.c           # Entry point (OTAA join + periodic tx)
+    │   └── common/
+    │       ├── CayenneLpp.[ch]  # LPP payload encoding
+    │       ├── cli.[ch]         # Serial console (UART)
+    │       ├── Commissioning.h  # DevEUI, JoinEUI, keys
+    │       ├── firmwareVersion.h
+    │       ├── LmHandler/       # LmHandler adaptor + packages
+    │       │   ├── LmHandler.c/.h
+    │       │   └── packages/    # ClockSync, Compliance, Fragmentation
+    │       └── NvmDataMgmt.[ch] # Persistent settings
+    ├── board/                   # Board support package (BSP)
+    │   ├── board.[ch]           # Board init (clocks, pins, peripherals)
+    │   ├── board-config.h       # Hardware config macros
+    │   ├── cmsis/               # CMSIS + HAL headers & startup
+    │   ├── hal/                 # STM32L1xx HAL drivers
+    │   └── *.board.[ch]         # SPI, UART, I2C, GPIO, ADC, RTC, LPm
+    ├── mac/                     # LoRaMAC protocol stack
+    │   ├── LoRaMac*.c/h         # Core MAC layer
+    │   └── region/
+    │       ├── Region.c/h       # Region abstraction
+    │       ├── RegionCommon.c   # Common region code
+    │       └── RegionAS923.c    # AS923 frequency plan
+    ├── peripherals/
+    │   └── soft-se/             # Software Secure Element
+    │       ├── soft-se.[ch]     # AES-128 / CMAC-128
+    │       ├── se-identity.h    # Device credentials (DevEUI, keys)
+    │       └── soft-se-hal.[ch] # SE HAL interface
+    └── radio/
+        ├── sx1276.[ch]          # SX1276 driver wrapper
+        └── sx1276/              # SX1276 register definitions
+```
+
+---
+
+## 🔧 Build
+
+### Prerequisites
+
+| Tool        | Version          |
+|-------------|------------------|
+| CMake       | ≥ 3.6            |
+| arm-none-eabi-gcc | 13.3.1 (GNU Tools for STM32) |
+| OpenOCD     | 0.12.x (STMicroelectronics build) |
+
+### Windows (PowerShell / Git Bash / MSYS2)
 
 ```bash
 cmake -B build -S . \
@@ -41,118 +170,107 @@ cmake -B build -S . -DTOOLCHAIN_PREFIX="/opt/gcc-arm-none-eabi"
 cmake --build build -j$(nproc)
 ```
 
-### Build Output
+### Build Artifacts
 
-| File                                       | Size   | Description              |
-|--------------------------------------------|--------|--------------------------|
-| `build/src/app/lorawan-sensor-node`        | 978 KB | ELF (with debug info)    |
-| `build/src/app/lorawan-sensor-node.bin`    |  88 KB | Raw binary for flashing  |
-| `build/src/app/lorawan-sensor-node.hex`    | 249 KB | Intel HEX                |
-| `build/lorawan-sensor-node.map`            |   -    | Linker map file          |
+| File | Size | Description |
+|------|------|-------------|
+| `build/src/app/lorawan-sensor-node` | ~978 KB | ELF (debug info) |
+| `build/src/app/lorawan-sensor-node.bin` | ~88 KB | Raw binary |
+| `build/src/app/lorawan-sensor-node.hex` | ~249 KB | Intel HEX |
+| `build/lorawan-sensor-node.map` | — | Linker map |
 
-### Size (Cortex-M3, 512 KB flash)
+**Flash usage:** ~89 KB / 512 KB (17%) — plenty of headroom for additional features.
 
-```
-   text    data     bss     dec     hex   filename
-  87672     724    8460   96856   17a58   lorawan-sensor-node
-```
+---
 
-Flash usage: ~89 KB (17% of 512 KB).
+## ⚡ Flash & Debug
 
-## Flash
-
-### Option 1: STM32CubeProgrammer CLI (recommended, simplest)
+### Flash via STM32CubeProgrammer (simplest)
 
 ```powershell
-"C:/Program Files/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe" `
+& "C:\Program Files\STMicroelectronics\STM32Cube\STM32CubeProgrammer\bin\STM32_Programmer_CLI.exe" `
   -c port=SWD mode=UR reset=HWrst `
-  -w build/src/app/lorawan-sensor-node.bin 0x08000000 `
-  -v `
-  -rst
+  -w build/src/app/lorawan-sensor-node.bin 0x08000000 -v -rst
 ```
 
-### Option 2: OpenOCD (bundled with STM32CubeIDE)
-
-OpenOCD scripts come from the CubeIDE debug plugin (2.3.200), while the executable comes from the external tools plugin (2.4.300). The `--search` flag tells OpenOCD where to find `interface/stlink.cfg` and `target/stm32l1x.cfg`.
+### Flash via OpenOCD
 
 ```powershell
 $OPENOCD = "C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.openocd.win32_2.4.300.202509300731/tools/bin/openocd.exe"
 $SCRIPTS = "C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.debug.openocd_2.3.200.202510310951/resources/openocd/st_scripts"
 
-& $OPENOCD -s $SCRIPTS -f interface/stlink.cfg -f openocd.cfg -c "program build/src/app/lorawan-sensor-node.bin verify reset exit 0x08000000"
+& $OPENOCD -s $SCRIPTS -f interface/stlink.cfg -f openocd.cfg `
+  -c "program build/src/app/lorawan-sensor-node.bin verify reset exit 0x08000000"
 ```
 
-Or interactive GDB session:
-```powershell
-& $OPENOCD -s $SCRIPTS -f interface/stlink.cfg -f openocd.cfg
-# In another terminal:
-arm-none-eabi-gdb build/src/app/lorawan-sensor-node
-(gdb) target extended-remote localhost:3333
-(gdb) monitor reset halt
-(gdb) load
-(gdb) monitor reset
-(gdb) continue
-```
+### VS Code Debug
 
-## Debug (VS Code)
+Open the project in VS Code → **Run and Debug** (F5) → select `Debug-lorawan-sensor-node`.
 
-`.vscode/launch.json` is preconfigured with `Debug-lorawan-sensor-node` launch.
+Requires: **Cortex-Debug** extension installed. The `launch.json` is preconfigured with the correct OpenOCD paths.
 
-Open in VS Code → **Run and Debug** → select `Debug-lorawan-sensor-node` → press F5.
+---
 
-Required:
-- `Cortex-Debug` VS Code extension installed
-- `debugServerArgs` points to the correct OpenOCD + st_scripts paths
+## 🔌 Serial Console
 
-## Serial Console
-
-Default baud: **115200** on USART1 (PA9/PA10).
-Connect a USB-to-Serial adapter and watch join/status messages.
+Baud rate: **115200** on USART1 (PA9/PA10). Connect a USB-to-Serial adapter and watch the boot messages:
 
 ```
 $1234 OTAA Join Request...
 $5678 Join Accept RX1
 ```
 
-## Configuration
+Useful for CLI commands and debugging join/data events.
 
-Key compile-time definitions in `src/app/CMakeLists.txt`:
+---
 
-| Define              | Value                          |
-|--------------------|--------------------------------|
-| `ACTIVE_REGION`    | `LORAMAC_REGION_AS923`        |
-| `LORAWAN_DEFAULT_CLASS` | `CLASS_A`               |
-| `CLASSB_ENABLED`   | `ON`                           |
-| `SECURE_ELEMENT`   | `SOFT_SE` (software crypto)   |
+## ⚙️ Configuration
 
-Change `ACTIVE_REGION` to your local frequency plan (EU868, US915, AU915, IN865, KR920, RU864).
+### Compile-time (src/app/CMakeLists.txt)
 
-## LoRaWAN OTAA Credentials
+| Define                        | Value               |
+|-------------------------------|---------------------|
+| `ACTIVE_REGION`               | `LORAMAC_REGION_AS923` |
+| `LORAWAN_DEFAULT_CLASS`       | `CLASS_A`           |
+| `CLASSB_ENABLED`              | `ON`                |
+| `SECURE_ELEMENT`              | `SOFT_SE`           |
+| `FIRMWARE_VERSION`            | `0x01030000` (1.3.0)|
 
-Defined in `src/peripherals/soft-se/se-identity.h`:
+Change `ACTIVE_REGION` for your local frequency plan: `EU868`, `US915`, `AU915`, `IN865`, `KR920`, `RU864`.
 
-| Field     | Hex Value                             |
-|-----------|---------------------------------------|
-| DevEUI    | `FF FF FF FF 00 00 0C 18`             |
-| JoinEUI   | `11 11 11 11 11 11 11 11`             |
+### Device Credentials (src/peripherals/soft-se/se-identity.h)
+
+| Field     | Value                                          |
+|-----------|------------------------------------------------|
+| DevEUI    | `FF FF FF FF 00 00 0C 18`                      |
+| JoinEUI   | `11 11 11 11 11 11 11 11`                      |
 | AppKey    | `27 97 EA F9 6C 7F 04 53 76 CA FD 05 F1 2C D3 38` |
-| NwkKey    | (same as AppKey for 1.0.x)            |
 
-> ⚠️ **Rotate these before deploying to production or pushing to a public repo.**
+> ⚠️ **Rotate these before deploying to production or sharing.**
 
-## Project Structure
+---
 
-```
-src/
-├── app/          Application (main, LmHandler, CayenneLpp)
-├── board/        Board support (HAL, CMSIS, drivers, linker script)
-├── mac/          LoRaMAC stack + AS923 region
-├── peripherals/  Soft-se crypto, AES/CMAC
-└── radio/        SX1276 driver
-cmake/            CMake toolchain & helpers
-openocd.cfg       OpenOCD configuration for STM32L152RE
-```
+## 📦 Dependencies
 
-## License
+| Dependency | Source | Purpose |
+|------------|--------|---------|
+| **LoRaMac-node** | [Semtech GitHub](https://github.com/Lora-net/LoRaMac-node) | LoRaWAN stack (v4.x) |
+| **CayenneLpp** | Embedded LPP encoder | Payload encoding |
+| **CMSIS / HAL** | STMicroelectronics | MCU abstraction layer |
+| **SX1276 driver** | Semtech reference | Radio HAL |
 
-LoRaMac-node BSD license (see `src/` root). Modified for STM32L152RE + SX1276MB1LAS.
+---
+
+## 📄 License
+
+This project uses the **BSD 3-Clause License** (inherited from LoRaMac-node / Semtech). See the [LoRaMac-node license](https://github.com/Lora-net/LoRaMac-node/blob/master/LICENSE) for full terms.
+
+---
+
+## 🚀 Roadmap
+
+- [ ] Support for additional regions (EU868, US915)
+- [ ] Hardware secure element (ATECC608A) integration
+- [ ] Over-the-air firmware update (OTAA + dual-bank swap)
+- [ ] Sensor driver integration (temperature, humidity, pressure)
+- [ ] OTA configuration via MAC commands
