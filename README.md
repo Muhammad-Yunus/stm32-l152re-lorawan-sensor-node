@@ -286,10 +286,3 @@ This project uses the **BSD 3-Clause License** (inherited from LoRaMac-node / Se
 
 ---
 
-## 🚀 Roadmap
-
-- [ ] Support for additional regions (EU868, US915)
-- [ ] Hardware secure element (ATECC608A) integration
-- [ ] Over-the-air firmware update (OTAA + dual-bank swap)
-- [ ] Sensor driver integration (temperature, humidity, pressure)
-- [ ] OTA configuration via MAC commands
