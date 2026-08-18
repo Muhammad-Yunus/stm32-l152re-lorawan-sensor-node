@@ -3,5 +3,11 @@
     "CMAKE_TOOLCHAIN_FILE": "cmake/toolchain-arm-none-eabi.cmake",
     "CLASSB_ENABLED": "ON"
   },
-  "cmake.buildBeforeRun": true
+  "cmake.buildBeforeRun": true,
+  "C_Cpp.default.compilerPath": "C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/arm-none-eabi-gcc.exe",
+  "C_Cpp.default.intelliSenseMode": "linux-gcc-arm",
+  "files.watcherExclude": {
+    "**/build-test/**": true,
+    "**/cmake-build-debug/**": true
+  }
 }

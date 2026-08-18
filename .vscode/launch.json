@@ -5,20 +5,23 @@
             "name": "Debug-lorawan-sensor-node",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/build/src/app/lorawan-sensor-node",
+            "program": "${workspaceFolder}/build/src/app/lorawan-sensor-node",
             "args": [],
             "stopAtEntry": true,
-            "cwd": "${workspaceRoot}",
+            "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false,
-            "debugServerArgs": "-f interface/stlink-v2.cfg -f target/stm32l1.cfg",
+            "MIMode": "gdb",
+            "miDebuggerPath": "C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/arm-none-eabi-gdb.exe",
+            "debugServerPath": "C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.openocd.win32_2.4.300.202509300731/tools/bin/openocd.exe",
+            "debugServerArgs": "-s \"C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.debug.openocd_2.3.200.202510310951/resources/openocd/st_scripts\" -f interface/stlink.cfg -f openocd.cfg",
             "serverLaunchTimeout": 20000,
             "filterStderr": true,
             "filterStdout": false,
-            "serverStarted": "Info\\ :\\ [\\w\\d\\.]*:\\ hardware",
+            "serverLaunchReadyRegex": "Info\\s*:\\s*\\[\\w\\.\\d\\]\\s*hardware",
             "setupCommands": [
-                { "text": "cd ${workspaceRoot}/build" },
-                { "text": "file ${workspaceRoot}/build/src/app/lorawan-sensor-node", "description": "load file", "ignoreFailures": false},
+                { "text": "cd ${workspaceFolder}/build" },
+                { "text": "file ${workspaceFolder}/build/src/app/lorawan-sensor-node", "description": "load file", "ignoreFailures": false },
                 { "text": "target extended-remote localhost:3333", "description": "connect to target", "ignoreFailures": false },
                 { "text": "monitor reset halt", "description": "perform a reset and halt the target", "ignoreFailures": false },
                 { "text": "load", "description": "flash target", "ignoreFailures": false },
@@ -31,10 +34,7 @@
                 "engineLogging": true,
                 "programOutput": true,
                 "exceptions": true
-            },
-            "MIMode": "gdb",
-            "miDebuggerPath": "C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/arm-none-eabi-gdb.exe",
-            "debugServerPath": "C:/openocd/bin/openocd.exe"
+            }
         }
     ]
 }
