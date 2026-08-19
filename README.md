@@ -140,13 +140,22 @@ User-corrected formula for **Grove Temperature Sensor V1.2** (NTC: NCP18WF104F03
 
 ```c
 // Parameters (src/board/board-config.h)
-#define NTC_R_NOMINAL        10000.0f   // 10kΩ NTC at T_NOMINAL_C
-#define NTC_BETA             4275.0f    // Beta coefficient (K)
-#define NTC_T_NOMINAL_C      25.0f      // Nominal temperature (°C)
-#define NTC_R_PULLUP         10000.0f   // 10kΩ pull-up resistor
-#define NTC_ATTENUATION_FACTOR 1.0f     // Direct voltage divider (no op-amp)
+#define NTC_R_NOMINAL          10000.0f   // 10kΩ NTC at T_NOMINAL_C
+#define NTC_BETA               4275.0f    // Beta coefficient (K)
+#define NTC_T_NOMINAL_C        25.0f      // Nominal temperature (°C)
+#define NTC_R_PULLUP           10000.0f   // 10kΩ pull-up resistor
+#define NTC_ATTENUATION_FACTOR  1.0f      // Direct voltage divider (no op-amp)
 
 // Calculation (src/board/board.c)
+GpioInit( &NtcAdcPin, SENSOR_NTC_TEMP_PIN, PIN_ANALOGIC, PIN_PUSH_PULL, PIN_NO_PULL, 0 );
+uint16_t adcRaw = AdcReadChannel( &Adc, ADC_CHANNEL_4 );
+
+// Fault detection
+if( adcRaw == 0 || adcRaw >= 4095 )
+{
+    return -2730;  /* sensor fault / out of range */
+}
+
 float adcEffective = (float)adcRaw * NTC_ATTENUATION_FACTOR;
 if( adcEffective > 4095.0f ) { adcEffective = 4095.0f; }
 float rNtc  = NTC_R_PULLUP * ( ( 4095.0f / adcEffective ) - 1.0f );
