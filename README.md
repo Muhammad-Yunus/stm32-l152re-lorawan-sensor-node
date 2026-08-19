@@ -84,12 +84,14 @@ This project is a bare-metal LoRaWAN end-device firmware running on an STM32L152
 
 ### Payload Structure (Port 2)
 
-| Channel | LPP Type | Data | Size | Source |
-|---------|----------|------|------|--------|
-| 0 | `LPP_DIGITAL_INPUT` (0) | LED state (0/1) | 1 byte | Downlink command |
-| 1 | `LPP_ANALOG_INPUT` (2) | Battery level (0-254 → ×100) | 2 bytes | `BoardGetBatteryLevel()` |
-| 2 | `LPP_TEMPERATURE` (103) | Temperature × 10 (°C) | 2 bytes | `BoardReadNtcTemperatureX10()` |
-| 3 | `LPP_ANALOG_INPUT` (2) | Raw ADC (0-4095) | 2 bytes | `BoardReadLdrRawAdc()` |
+Payload sent on both **periodic TX** and **PIR event trigger**:
+
+| Channel | LPP Type | Data | Size | Source | Decode Example |
+|---------|----------|------|------|--------|----------------|
+| 0 | `LPP_DIGITAL_INPUT` (0) | LED state | 1 byte | Downlink command | `0` = off, `1` = on |
+| 1 | `LPP_ANALOG_INPUT` (2) | Battery level | 2 bytes | `BoardGetBatteryLevel()` | `128` → 50% |
+| 2 | `LPP_TEMPERATURE` (103) | Temperature | 2 bytes | `BoardReadNtcTemperatureX10()` | `263` → 26.3°C |
+| 3 | `LPP_ANALOG_INPUT` (2) | LDR raw ADC | 2 bytes | `BoardReadLdrRawAdc()` | `46` → raw value |
 
 ### Example JSON Output (from ChirpStack)
 
@@ -97,7 +99,7 @@ This project is a bare-metal LoRaWAN end-device firmware running on an STM32L152
 {
   "analogInput": {
     "1": 128,
-    "3": 38
+    "3": 46
   },
   "digitalInput": {
     "0": 0
@@ -113,22 +115,20 @@ This project is a bare-metal LoRaWAN end-device firmware running on an STM32L152
 ```
 00 00        ← Ch0: DIGITAL_INPUT = 0 (LED off)
 02 80 00     ← Ch1: ANALOG_INPUT = 128 (battery 50%)
-67 01 07    ← Ch2: TEMPERATURE = 26.3°C (0x0107 × 0.1)
-03 02 0E D8 ← Ch3: ANALOG_INPUT = 38 (light 38%)
+67 01 07     ← Ch2: TEMPERATURE = 26.3°C (0x0107 × 0.1)
+03 00 2E     ← Ch3: ANALOG_INPUT = 46 (LDR raw ADC)
 ```
 
 ### PIR Event-Based Transmission
 
 PIR sensor (`D6` / `PB_10`) triggers **immediate uplink** on motion detection via EXTI10 rising edge interrupt:
 
-| Aspect | Detail |
-|--------|--------|
-| **Interrupt** | `EXTI10` on `PB_10` (rising edge) |
-| **Action** | Set `IsTxFramePending = 1` |
-| **Result** | Next loop iteration sends full payload (same as periodic TX) |
-| **LPP Type** | `LPP_PRESENCE` (102) — not yet in payload (future: channel 4) |
+| Trigger | Action | Payload |
+|---------|--------|---------|
+| Motion detected (rising edge on PB_10) | Set `IsTxFramePending = 1` | Same as periodic TX |
+| No motion | Timer-based periodic TX | Same payload |
 
-> **Note:** PIR currently only triggers TX. Motion status (`LPP_PRESENCE`) will be added to payload in future update.
+> **Note:** Same 4-channel payload is sent on both periodic and PIR-triggered TX. PIR action is **only trigger**, no separate motion status in payload yet.
 
 ---
 
