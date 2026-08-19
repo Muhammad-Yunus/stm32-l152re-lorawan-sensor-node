@@ -128,6 +128,7 @@ Version_t BoardGetVersion( void );
 int16_t BoardReadNtcTemperatureX10( void );
 uint8_t BoardReadLdrLightLevel( void );
 uint16_t BoardReadNtcRawAdc( void );
+uint16_t BoardReadLdrRawAdc( void );
 void    BoardInitPirSensor( void );
 
 #ifdef __cplusplus

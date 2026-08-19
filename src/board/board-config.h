@@ -131,9 +131,9 @@ extern "C"
 /*!
  * External sensor pin definitions
  */
-#define SENSOR_NTC_TEMP_PIN                        PC_1   /* ADC_CHANNEL_14 (test for conflict) */
+#define SENSOR_NTC_TEMP_PIN                        PA_4   /* ADC_CHANNEL_4  (Arduino A2) */
 #define SENSOR_LDR_LIGHT_PIN                       PA_1   /* ADC_CHANNEL_1  (Arduino A1) */
-#define SENSOR_PIR_MOTION_PIN                      PA_4   /* EXTI4          (Arduino A2) */
+#define SENSOR_PIR_MOTION_PIN                      PB_10  /* EXTI10         (Arduino D6) */
 
 /*!
  * Steinhart-Hart NTC parameters (Seeed Studio Grove Temperature Sensor V1.1)

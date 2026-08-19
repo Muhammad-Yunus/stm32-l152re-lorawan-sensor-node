@@ -24,8 +24,8 @@ Agent-focused development reference for this firmware project. Covers code struc
 ## Hardware Overview
 
 **Board:** STMicroelectronics **Nucleo-L152RE** — STM32L152RET6 (Cortex-M3, 512 KB Flash, 120 KB RAM), Arduino Uno v2 compatible header, on-board ST-LINK/V2 debugger
-**Radio Shield:** Semtech **SX1276MB1LAS LoRa Shield**
-**Sensors:** 3× Grove modules — PIR Motion (A2), LDR Light (A1), NTC Temp (D6)
+**Radio Shield:** Semtech **SX1276MB1LAS LoRa Shield** — ⚠️ NO radio frequency selection pin (pin868/915MHz). Radio is fixed AS923 (868 MHz).
+**Sensors:** 3× Grove modules — PIR Motion (D6), LDR Light (A1), NTC Temp (A2)
 
 ---
 
@@ -35,9 +35,9 @@ Agent-focused development reference for this firmware project. Covers code struc
 
 | Sensor | Arduino Pin | MCU Pin | Peripheral | LPP Type | Channel | Description |
 |--------|-------------|---------|------------|----------|---------|-------------|
-| **NTC Temperature** | `D6` | `PB_10` | `ADC_CHANNEL_11` | `LPP_TEMPERATURE` (103) | 2 | Seeed Grove V1.2, 10kΩ pull-up, B=4275 |
+| **PIR Motion** | `D6` | `PB_10` | `EXTI10` (rising) | `LPP_PRESENCE` (102) | — | Grove PIR, triggers TX on motion |
 | **LDR Light** | `A1` | `PA_1` | `ADC_CHANNEL_1` | `LPP_ANALOG_INPUT` (2) | 3 | Grove Light Sensor, 0-100% |
-| **PIR Motion** | `A2` | `PA_4` | `EXTI4` (rising) | `LPP_PRESENCE` (102) | — | Grove PIR, triggers TX on motion |
+| **NTC Temperature** | `A2` | `PA_4` | `ADC_CHANNEL_4` | `LPP_TEMPERATURE` (103) | 2 | Seeed Grove V1.2, 10kΩ pull-up, B=4275 |
 
 ### Arduino Header Pin Usage
 
@@ -49,7 +49,7 @@ Agent-focused development reference for this firmware project. Covers code struc
 | `D3`  | `PB_3`  | CN9-5 | SX1276 DIO1 |
 | `D4`  | `PB_5`  | CN9-7 | SX1276 DIO2 |
 | `D5`  | `PB_4`  | CN9-9 | SX1276 DIO3 |
-| `D6`  | `PB_10` | CN9-11 | NTC Temp (ADC11 / EXTI10 / TIM2_CH3) |
+| `D6`  | `PB_10` | CN9-11 | PIR Motion (EXTI10) |
 | `D7`  | `PA_8`  | CN9-13 | _UNUSED — EXTI8 / TIM1_CH1_ |
 | `D8`  | `PA_9`  | CN5-1 | SX1276 DIO4 |
 | `D9`  | `PC_7`  | CN5-2 | SX1276 DIO5 |
@@ -59,14 +59,14 @@ Agent-focused development reference for this firmware project. Covers code struc
 | `D13` | `PA_5`  | CN5-6 | SPI1_SCK |
 | `A0`  | `PA_0`  | CN8-1 | RADIO_RESET |
 | `A1`  | `PA_1`  | CN8-2 | LDR Light |
-| `A2`  | `PA_4`  | CN8-3 | PIR Motion (EXTI) |
+| `A2`  | `PA_4`  | CN8-3 | NTC Temperature (ADC4) |
 | `A3`  | `PB_0`  | CN8-4 | SX1276 DBG_TX |
 | `A4`  | `PC_1`  | CN8-5 | SX1276 ANT_SW |
 | `A5`  | `PC_0`  | CN8-6 | LED_RX |
 | `D14` | `PB_9`  | CN5-9 | _UNUSED_ |
 | `D15` | `PB_8`  | CN5-10 | _UNUSED_ |
 
-> **Note:** NTC connected to **D6** (`PB_10`, Arduino header). Sensor connections: LDR=`A1`, PIR=`A2`. A3=DBG_TX, A4=ANT_SW, A5=LED_RX (radio). Unused pins **D7**, **D14**, and **D15** available for user use.
+> **Note:** Sensor connections: NTC=`A2` (PA4, ADC4), PIR=`D6` (PB10, EXTI10), LDR=`A1` (PA1, ADC1). A3=DBG_TX, A4=ANT_SW, A5=LED_RX (radio). Unused pins **D7**, **D14**, and **D15** available for user use.
 
 ---
 
@@ -156,7 +156,7 @@ To add new sensors, call additional `CayenneLppAdd*()` functions in `PrepareTxFr
 
 ### PIR Motion Sensor
 
-The PIR sensor is configured as an **EXTI interrupt** on `PA_4`. When motion is detected (rising edge), it sets `IsTxFramePending = 1` to trigger an immediate uplink transmission.
+The PIR sensor is configured as an **EXTI interrupt** on `PB_10`. When motion is detected (rising edge), it sets `IsTxFramePending = 1` to trigger an immediate uplink transmission.
 
 ```c
 // board.c
@@ -276,7 +276,10 @@ cmake --build build --config Debug
 
 ## Flash & Debug
 
-### Option 1 — STM32CubeProgrammer (CLI)
+### ⚠️ CRITICAL: ST-Link Detection Issue
+MCP Tool `stm32_list_probes` often shows "No ST-Link probes detected" on Nucleo-L152RE. This is a known issue - the probe IS connected but MCP tool fails to detect it. **Always use CLI tools instead.**
+
+### Option 1 — STM32CubeProgrammer (CLI) [RECOMMENDED]
 
 ```bash
 # Flash .bin (fastest, no verify)
@@ -286,17 +289,24 @@ STM32_Programmer_CLI -c port=swd -w build/src/app/lorawan-sensor-node.bin 0x0800
 STM32_Programmer_CLI -c port=swd -w build/src/app/lorawan-sensor-node.bin 0x08000000 -v
 ```
 
+> **Path:** `C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.cubeprogrammer.win32_2.2.300.202508131133/tools/bin/STM32_Programmer_CLI.exe`
+
 ### Option 2 — OpenOCD (CLI)
 
 ```bash
-# Flash .hex + reset
-openocd -f interface/stlink.cfg -f openocd.cfg \
-        -c "program build/src/app/lorawan-sensor-node.hex verify reset exit"
+# Flash .hex + reset (use full path to openocd.exe)
+"C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.openocd.win32_2.4.300.202509300731/tools/bin/openocd.exe" \
+  -f "C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.openocd.win32_2.4.300.202509300731/tools/share/openocd/scripts/interface/stlink.cfg" \
+  -f "C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.openocd.win32_2.4.300.202509300731/tools/share/openocd/scripts/target/stm32l1x.cfg" \
+  -c "program build/src/app/lorawan-sensor-node.hex verify reset exit"
 
 # Flash .bin directly
-openocd -f interface/stlink.cfg -f openocd.cfg \
-        -c "init; reset halt; flash write_image erase build/src/app/lorawan-sensor-node.bin 0x08000000 bin; reset run; exit"
+"C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.openocd.win32_2.4.300.202509300731/tools/bin/openocd.exe" \
+  -f interface/stlink.cfg -f target/stm32l1x.cfg \
+  -c "init; reset halt; flash write_image erase build/src/app/lorawan-sensor-node.bin 0x08000000 bin; reset run; shutdown"
 ```
+
+> **NOTE:** MCP tool `stm32_list_probes` often fails to detect ST-Link on Nucleo boards. Use CLI commands above instead.
 
 ### Option 3 — VS Code + Cortex-Debug
 
@@ -406,8 +416,8 @@ CHANNEL MASK: 0003
 | UART2_RX | PA3 | `D0` | UART2 |
 | RADIO_RESET | PA0 | `A0` | GPIO |
 | **LDR_LIGHT** | **PA1** | **`A1`** | **ADC_CHANNEL_1** |
-| **PIR_MOTION** | **PA4** | **`A2`** | **EXTI4** |
-| **NTC_TEMP** | **PB_10** | **`D6`** | **ADC_CHANNEL_11** |
+| **NTC_TEMP** | **PA4** | **`A2`** | **ADC_CHANNEL_4** |
+| **PIR_MOTION** | **PB10** | **`D6`** | **EXTI10** |
 
 ### Key board-config macros (`src/board/board-config.h`)
 
@@ -420,9 +430,9 @@ CHANNEL MASK: 0003
 #define UART_RX          PA_3
 
 // Sensors
-#define SENSOR_NTC_TEMP_PIN    PB_10  // ADC_CHANNEL_11
+#define SENSOR_NTC_TEMP_PIN    PA_4   // ADC_CHANNEL_4
 #define SENSOR_LDR_LIGHT_PIN   PA_1   // ADC_CHANNEL_1
-#define SENSOR_PIR_MOTION_PIN  PA_4   // EXTI4
+#define SENSOR_PIR_MOTION_PIN  PB_10  // EXTI10
 ```
 
 ---
@@ -499,7 +509,7 @@ The main loop calls `BoardLowPowerHandler()` whenever `IsMacProcessPending == 0`
 - SX1276 DIO interrupt (TX done, RX data ready, beacon)
 - RTC alarm (for Class B ping slot scheduling)
 - UART character arrival (CLI polling)
-- **PIR motion detected** (EXTI rising edge on PA4)
+- **PIR motion detected** (EXTI rising edge on PB10)
 
 To further reduce power:
 1. Reduce `APP_TX_DUTYCYCLE` to a larger value (longer sleep between TX).
@@ -510,14 +520,36 @@ To further reduce power:
 
 ## Conventions for Agents
 
-When working in this repository:
+**⚠️ CRITICAL - READ BEFORE WORKING ON THIS PROJECT:**
 
-- **Do not modify** `githubVersion.h` — it is auto-generated by CMake on each build.
-- **Do not modify** `build/` contents directly — always rebuild via CMake.
-- **Commit format:** `type: short description` (e.g., `feat: add humidity sensor`, `fix: correct AS923 channel frequencies`).
-- **New files** go under `src/app/` (application), `src/board/` (BSP), `src/mac/` (MAC), or `src/peripherals/` — update the corresponding `CMakeLists.txt` in that directory.
-- **New peripherals** (sensors, etc.): implement as a board driver in `src/board/` following the pattern of `adc-board.c` / `i2c-board.c`, then consume in `main.c` or a new `src/app/` module.
-- **Region changes** should not touch `main.c` beyond the `ACTIVE_REGION` macro — region logic lives entirely in `src/mac/region/`.
-- **Always verify** that `build/src/app/lorawan-sensor-node.elf` is generated before flashing — the `.bin`/`.hex` are derived from it.
-- **Check section sizes** after each build — use the `arm-none-eabi-size` output printed by CMake to confirm the binary fits within 512 KB flash and 120 KB RAM.
-- **Sensor calibration**: When modifying NTC parameters, verify against known temperature (e.g., room temp ~25°C). The Seeed Grove V1.2 formula uses `R0=10kΩ`, `B=4275`.
+1. **Board: ST-LINK/V2 on Nucleo-L152RE** - MCPTool `stm32_list_probes` often shows "No probes detected". This is a known issue. Use CLI tools instead:
+   ```bash
+   # Flash via CLI (works when MCP fails)
+   STM32_Programmer_CLI -c port=swd -w build/src/app/lorawan-sensor-node.bin 0x08000000 -v -rst
+   
+   # Or find OpenOCD at:
+   C:\ST\STM32CubeIDE_2.0.0\STM32CubeIDE\plugins\com.st.stm32cube.ide.mcu.externaltools.openocd.win32_2.4.300.202509300731\tools\bin\openocd.exe
+   ```
+
+2. **Build system: CMake, NOT CubeIDE GUI** - Always use `cmake --build build`, never trust CubeIDE GUI builder. Output: `build/src/app/lorawan-sensor-node.elf`
+
+3. **SX1276MB1LAS shield** - NO radio frequency selection pin (pin868/915MHz). Radio is fixed AS923 (868 MHz). `RADIO_FREQ_SEL` in board-config.h is UNUSED/placeholder.
+
+4. **Sensor pin mapping** (verify before coding):
+   - LDR → PA_1 → ADC_CHANNEL_1 (A1 pin on Arduino header)
+   - NTC → PA_4 → ADC_CHANNEL_4 (A2 pin)
+   - PIR → PB_10 → EXTI10 (D6 pin)
+
+5. **Serial: 921600 baud, not 115200** - Debug console uses UART2 at 921600-8-N-1.
+
+6. **CayenneLpp payload types**:
+   - `LPP_LUMINOSITY` (type 101) = uint16 lux (2 bytes)
+   - `LPP_ANALOG_INPUT` (type 2) = int16 x0.01 (2 bytes)
+   - Don't mix these up! Light sensor raw ADC needs proper scaling.
+
+7. **Never skip verification step** - After every code change, verify:
+   - Build succeeds (check size output)
+   - Debug prints match payload values
+   - Uplink frames contain expected data
+
+8. **Git history management** - Clean commits only. Never force push. Use conventional commits: `fix:`, `feat:`, `docs:`, `refactor:`.

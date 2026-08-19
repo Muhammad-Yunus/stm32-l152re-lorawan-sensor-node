@@ -357,8 +357,9 @@ void BoardInitPirSensor( void )
     GpioMcuSetInterrupt( &PirMotion, IRQ_RISING_EDGE, IRQ_LOW_PRIORITY, PirMotionIsr );
 }
 
-/* Global variable for debug: last raw ADC reading */
+/* Global variables for debug: last raw ADC readings */
 static volatile uint16_t NtcDebugAdcRaw = 0;
+static volatile uint16_t LdrDebugAdcRaw = 0;
 
 int16_t BoardReadNtcTemperatureX10( void )
 {
@@ -368,7 +369,7 @@ int16_t BoardReadNtcTemperatureX10( void )
      *   =>  R_NTC = R_PULLUP * (4095 - adc) / adc
      */
     GpioInit( &NtcAdcPin, SENSOR_NTC_TEMP_PIN, PIN_ANALOGIC, PIN_PUSH_PULL, PIN_NO_PULL, 0 );
-    uint16_t adcRaw = AdcReadChannel( &Adc, ADC_CHANNEL_14 );
+    uint16_t adcRaw = AdcReadChannel( &Adc, ADC_CHANNEL_4 );
     NtcDebugAdcRaw = adcRaw;  /* store for debug */
     if( adcRaw == 0 || adcRaw >= 4095 )
     {
@@ -395,10 +396,17 @@ uint16_t BoardReadNtcRawAdc( void )
     return NtcDebugAdcRaw;  /* return cached value from last temp read */
 }
 
+uint16_t BoardReadLdrRawAdc( void )
+{
+    GpioInit( &LdrAdcPin, SENSOR_LDR_LIGHT_PIN, PIN_ANALOGIC, PIN_PUSH_PULL, PIN_NO_PULL, 0 );
+    return AdcReadChannel( &Adc, ADC_CHANNEL_1 );
+}
+
 uint8_t BoardReadLdrLightLevel( void )
 {
     GpioInit( &LdrAdcPin, SENSOR_LDR_LIGHT_PIN, PIN_ANALOGIC, PIN_PUSH_PULL, PIN_NO_PULL, 0 );
     uint16_t adcRaw = AdcReadChannel( &Adc, ADC_CHANNEL_1 );
+    LdrDebugAdcRaw = adcRaw;  /* store for debug */
     return ( uint8_t )( adcRaw * 100u / 4095u );
 }
 

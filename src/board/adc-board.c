@@ -54,6 +54,7 @@ void AdcMcuConfig( void )
     AdcHandle.Init.NbrOfConversion       = 1;
     AdcHandle.Init.LowPowerAutoWait      = DISABLE;
     AdcHandle.Init.LowPowerAutoPowerOff  = DISABLE;
+    AdcHandle.Init.ChannelsBank          = ADC_CHANNELS_BANK_A;
     HAL_ADC_Init( &AdcHandle );
 }
 

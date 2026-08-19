@@ -26,7 +26,7 @@ This project is a bare-metal LoRaWAN end-device firmware running on an STM32L152
 - **Class A** default with **Class B** clock-sync support
 - **AS923** regional parameters (changeable to EU868, US915, etc.)
 - Ultra-low power STM32L152 (Cortex-M3, sub-µA sleep current)
-- **3 Grove sensors:** PIR Motion (PA4/A2), LDR Light (PA1/A1), NTC Temperature (D6/PB10)
+- **3 Grove sensors:** PIR Motion (PB10/D6), LDR Light (PA1/A1), NTC Temperature (PA4/A2)
 - Dual-bank 512 KB flash with runtime firmware version tracking
 
 ---
@@ -42,40 +42,40 @@ This project is a bare-metal LoRaWAN end-device firmware running on an STM32L152
 
 ### Grove Sensors (3 modules on Arduino header)
 
-| Sensor | Module | Arduino Pin | MCU Pin | ADC / Ext | LPP Type | Description |
-|--------|--------|-------------|---------|-----------|----------|-------------|
-| **PIR Motion** | Grove - PIR Motion Sensor | `A2` | `PA_4` | EXTI4 (rising) | `LPP_PRESENCE` (102) | Motion detection, triggers TX on event |
-| **LDR Light** | Grove - Light Sensor | `A1` | `PA_1` | `ADC_CHANNEL_1` | `LPP_ANALOG_INPUT` (2) | Ambient light level (0-100%) |
-| **NTC Temperature** | Grove - Temperature Sensor V1.2 | `D6` | `PB_10` | `ADC_CHANNEL_11` | `LPP_TEMPERATURE` (103) | Temperature in °C (Seeed formula) |
+| Sensor | Module | Arduino Pin | MCU Pin | ADC / Ext | LPP Type | Description | Status |
+|--------|--------|-------------|---------|-----------|----------|-------------|--------|
+| **PIR Motion** | Grove - PIR Motion Sensor | `D6` | `PB_10` | `EXTI10` (rising) | `LPP_PRESENCE` (102) | Motion detection, triggers TX on event | ✅ Working |
+| **LDR Light** | Grove - Light Sensor | `A1` | `PA_1` | `ADC_CHANNEL_1` | `LPP_ANALOG_INPUT` (2) | Ambient light level (0–100%) | ✅ Working |
+| **NTC Temperature** | Grove - Temperature Sensor V1.2 | `A2` | `PA_4` | `ADC_CHANNEL_4` | `LPP_TEMPERATURE` (103) | Temperature in °C (Seeed formula) | ✅ Working (hardware swapped) |
+
+> ⚠️ **NTC Temperature pin note:** Hardware swapped from original plan — NTC now wired to Arduino `A2` (`PA_4`, ADC_CHANNEL_4). Original plan used `D6` (`PB_10`) but **`PB_10` is not ADC-capable on STM32L152RE**. PIR motion sensor moved to `D6` (`PB_10`) as digital input via EXTI10.
 
 ### Arduino Header Pin Usage
 
-| Pin | MCU Pin | Connector | Function |
-|-----|---------|-----------|----------|
-| `D0`  | `PA_3`  | CN9-2 | UART2_RX |
-| `D1`  | `PA_2`  | CN9-1 | UART2_TX |
-| `D2`  | `PA_10` | CN9-3 | SX1276 DIO0 |
-| `D3`  | `PB_3`  | CN9-5 | SX1276 DIO1 |
-| `D4`  | `PB_5`  | CN9-7 | SX1276 DIO2 |
-| `D5`  | `PB_4`  | CN9-9 | SX1276 DIO3 |
-| `D6`  | `PB_10` | CN9-11 | NTC Temp (ADC11 / EXTI10 / TIM2_CH3) |
-| `D7`  | `PA_8`  | CN9-13 | _UNUSED — EXTI8 / TIM1_CH1_ |
-| `D8`  | `PA_9`  | CN5-1 | SX1276 DIO4 |
-| `D9`  | `PC_7`  | CN5-2 | SX1276 DIO5 |
-| `D10` | `PB_6`  | CN5-3 | SX1276 NSS |
-| `D11` | `PA_7`  | CN5-4 | SPI1_MOSI |
-| `D12` | `PA_6`  | CN5-5 | SPI1_MISO |
-| `D13` | `PA_5`  | CN5-6 | SPI1_SCK |
-| `A0`  | `PA_0`  | CN8-1 | RADIO_RESET |
-| `A1`  | `PA_1`  | CN8-2 | LDR Light |
-| `A2`  | `PA_4`  | CN8-3 | PIR Motion (EXTI) |
-| `A3`  | `PB_0`  | CN8-4 | SX1276 DBG_TX |
-| `A4`  | `PC_1`  | CN8-5 | SX1276 ANT_SW |
-| `A5`  | `PC_0`  | CN8-6 | LED_RX |
-| `D14` | `PB_9`  | CN5-9 | _UNUSED_ |
-| `D15` | `PB_8`  | CN5-10 | _UNUSED_ |
-
-> **Note:** NTC connected to **D6** (`PB_10`, Arduino header). Sensor connections: LDR=`A1`, PIR=`A2`. A3=DBG_TX, A4=ANT_SW, A5=LED_RX (radio). Unused pins **D7**, **D14**, and **D15** available for user use.
+| Pin | MCU Pin | Connector | Function | ADC-capable? |
+|-----|---------|-----------|----------|---------------|
+| `D0`  | `PA_3`  | CN9-2  | UART2_RX | ✗ |
+| `D1`  | `PA_2`  | CN9-1  | UART2_TX | ✗ |
+| `D2`  | `PA_10` | CN9-3  | SX1276 DIO0 | ✗ |
+| `D3`  | `PB_3`  | CN9-5  | SX1276 DIO1 | ✗ |
+| `D4`  | `PB_5`  | CN9-7  | SX1276 DIO2 | ✗ |
+| `D5`  | `PB_4`  | CN9-9  | SX1276 DIO3 | ✗ |
+| `D6`  | `PB_10` | CN9-11 | PIR Motion (EXTI10) | ✓ (in use) |
+| `D7`  | `PA_8`  | CN9-13 | _UNUSED — EXTI8 / TIM1_CH1_ | ✗ |
+| `D8`  | `PA_9`  | CN5-1  | SX1276 DIO4 | ✗ |
+| `D9`  | `PC_7`  | CN5-2  | SX1276 DIO5 | ✗ |
+| `D10` | `PB_6`  | CN5-3  | SX1276 NSS | ✗ |
+| `D11` | `PA_7`  | CN5-4  | SPI1_MOSI | ✗ |
+| `D12` | `PA_6`  | CN5-5  | SPI1_MISO | ✗ |
+| `D13` | `PA_5`  | CN5-6  | SPI1_SCK | ✗ |
+| `A0`  | `PA_0`  | CN8-1  | RADIO_RESET | ✓ (in use) |
+| `A1`  | `PA_1`  | CN8-2  | LDR Light | ✓ (in use) |
+| `A2`  | `PA_4`  | CN8-3  | NTC Temperature (ADC4) | ✓ (in use) |
+| `A3`  | `PB_0`  | CN8-4  | *Unused* — `RADIO_XTAL_SEL` & `RADIO_DBG_PIN_TX` (SX1276MB1LAS) are dead code in this config | ✓ (potentially ADC-capable) |
+| `A4`  | `PC_1`  | CN8-5  | SX1276 ANT_SW | ✓ (in use) |
+| `A5`  | `PC_0`  | CN8-6  | LED_RX | ✓ (in use) |
+| `D14` | `PB_9`  | CN5-9  | _UNUSED_ | ✗ |
+| `D15` | `PB_8`  | CN5-10 | _UNUSED_ | ✗ |
 
 ---
 
@@ -142,11 +142,24 @@ float temperature = 1.0f / (log(rNtc / NTC_R_NOMINAL) / NTC_BETA + (1.0f / 298.1
 ### Sensor Wiring
 
 ```
-VDD (3.3V) ───┬─── NTC (Grove module)
-              │
-              ├─── PB_10 (ADC input)  ← Arduino D6 header pin
-              │
-R_pullup(10k) ─┴─── GND
+VDD = 3.3 V
+   │
+   │
+R_PULLUP
+ 10 kΩ
+   │
+   ├──────────────┐
+   │              │
+   │             (+)
+NTC 100 kΩ     ┌─────┐
+   │           │LM358│
+  GND          └──┬──┘
+			      │ OUT
+				  │
+				  └─ PB10 / ADC
+				   		│
+						│
+				NUCLEO L152RE D6 (PB_10)
 ```
 
 **Important:** The Grove module has an **internal 10kΩ pull-up resistor** and op-amp buffer. No external pull-up is needed.
@@ -201,7 +214,7 @@ R_pullup(10k) ─┴─── GND
 │   │  • UART (CLI)    │ │  • IRQ handlers  │ │  • CMAC-128        │  │
 │   │  • I2C / SPI     │ │  • TX / RX       │ │  • Key derivation  │  │
 │   │  • GPIO, ADC     │ │  • LoRa modem    │ │  • Device identity │  │
-│   │  • RTC, LPM      │ │  • FSK / OOK     ��� │                    │  │
+│   │  • RTC, LPM      │ │  • FSK / OOK     │ │                    │  │
 │   │  • PIR EXTI      │ │                  │ │                    │  │
 │   └──────────────────┘ └──────────────────┘ └────────────────────┘  │
 │            │                  │                    │                │

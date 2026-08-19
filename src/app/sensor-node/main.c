@@ -457,7 +457,13 @@ static void PrepareTxFrame( void )
     CayenneLppAddDigitalInput( channel++, AppLedStateOn );
     CayenneLppAddAnalogInput(  channel++, BoardGetBatteryLevel( ) * 100 / 254 );
     CayenneLppAddTemperature(  channel++, ( float )BoardReadNtcTemperatureX10( ) / 10.0f );
-    CayenneLppAddAnalogInput(  channel++, ( float )BoardReadLdrLightLevel( ) );
+    /* Send raw ADC value as analog input (12-bit, 0-4095) */
+    CayenneLppAddAnalogInput( channel++, ( float )BoardReadLdrRawAdc() );
+    /* Read LDR multiple times for debug */
+    uint16_t ldr1 = BoardReadLdrRawAdc();
+    uint16_t ldr2 = BoardReadLdrRawAdc();
+    uint16_t ldr3 = BoardReadLdrRawAdc();
+    printf( "[LDR] try1:%u try2:%u try3:%u avg:%u\r\n", ldr1, ldr2, ldr3, (ldr1+ldr2+ldr3)/3 );
 
     CayenneLppCopy( AppData.Buffer );
     AppData.BufferSize = CayenneLppGetSize( );
