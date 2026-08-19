@@ -92,6 +92,7 @@ Payload sent on both **periodic TX** and **PIR event trigger**:
 | 1 | `LPP_ANALOG_INPUT` (2) | Battery level | 2 bytes | `BoardGetBatteryLevel()` | `128` → 50% |
 | 2 | `LPP_TEMPERATURE` (103) | Temperature | 2 bytes | `BoardReadNtcTemperatureX10()` | `263` → 26.3°C |
 | 3 | `LPP_ANALOG_INPUT` (2) | LDR raw ADC | 2 bytes | `BoardReadLdrRawAdc()` | `46` → raw value |
+| 4 | `LPP_PRESENCE` (102) | Motion detected | 1 byte | `BoardReadPirMotion()` | `1` = motion, `0` = none |
 
 ### Example JSON Output (from ChirpStack)
 
@@ -103,6 +104,9 @@ Payload sent on both **periodic TX** and **PIR event trigger**:
   },
   "digitalInput": {
     "0": 0
+  },
+  "presenceSensor": {
+    "4": 1
   },
   "temperatureSensor": {
     "2": 26.3
@@ -117,6 +121,7 @@ Payload sent on both **periodic TX** and **PIR event trigger**:
 02 80 00     ← Ch1: ANALOG_INPUT = 128 (battery 50%)
 67 01 07     ← Ch2: TEMPERATURE = 26.3°C (0x0107 × 0.1)
 03 00 2E     ← Ch3: ANALOG_INPUT = 46 (LDR raw ADC)
+66 01        ← Ch4: PRESENCE = 1 (motion detected)
 ```
 
 ### PIR Event-Based Transmission
@@ -125,10 +130,10 @@ PIR sensor (`D6` / `PB_10`) triggers **immediate uplink** on motion detection vi
 
 | Trigger | Action | Payload |
 |---------|--------|---------|
-| Motion detected (rising edge on PB_10) | Set `IsTxFramePending = 1` | Same as periodic TX |
-| No motion | Timer-based periodic TX | Same payload |
+| Motion detected (rising edge on PB_10) | Set `IsTxFramePending = 1` | 5-channel payload with motion = 1 |
+| No motion | Timer-based periodic TX | 5-channel payload with motion = 0 |
 
-> **Note:** Same 4-channel payload is sent on both periodic and PIR-triggered TX. PIR action is **only trigger**, no separate motion status in payload yet.
+> **Note:** PIR status (`LPP_PRESENCE`) is now included in payload as channel 4. Both periodic and PIR-triggered TX send the same 5-channel payload.
 
 ---
 

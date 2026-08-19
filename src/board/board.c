@@ -357,6 +357,12 @@ void BoardInitPirSensor( void )
     GpioMcuSetInterrupt( &PirMotion, IRQ_RISING_EDGE, IRQ_LOW_PRIORITY, PirMotionIsr );
 }
 
+/* Debug: read PIR motion sensor state */
+uint8_t BoardReadPirMotion( void )
+{
+    return GpioRead( &PirMotion );
+}
+
 /* Global variables for debug: last raw ADC readings */
 static volatile uint16_t NtcDebugAdcRaw = 0;
 static volatile uint16_t LdrDebugAdcRaw = 0;
