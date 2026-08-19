@@ -12,6 +12,8 @@
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](#-license)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-lightgrey)](#)
 
+![STM32 NUCLEO L152RE + LoRa Shield SX1276 MB1LAS](docs/banner.png)
+
 ---
 
 ## 📋 Overview
