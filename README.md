@@ -45,7 +45,7 @@ This project is a bare-metal LoRaWAN end-device firmware running on an STM32L152
 | Sensor | Module | Arduino Pin | MCU Pin | ADC / Ext | LPP Type | Description | Status |
 |--------|--------|-------------|---------|-----------|----------|-------------|--------|
 | **PIR Motion** | Grove - PIR Motion Sensor | `D6` | `PB_10` | `EXTI10` (rising) | `LPP_PRESENCE` (102) | Motion detection, triggers TX on event | ✅ Working |
-| **LDR Light** | Grove - Light Sensor | `A1` | `PA_1` | `ADC_CHANNEL_1` | `LPP_ANALOG_INPUT` (2) | Ambient light level (0–100%) | ✅ Working |
+| **LDR Light** | Grove - Light Sensor | `A1` | `PA_1` | `ADC_CHANNEL_1` | `LPP_LUMINOSITY` (101) | Raw ADC 0–4095 (no conversion) | ✅ Working |
 | **NTC Temperature** | Grove - Temperature Sensor V1.2 | `A2` | `PA_4` | `ADC_CHANNEL_4` | `LPP_TEMPERATURE` (103) | Temperature in °C (Seeed formula) | ✅ Working |
 
 ### Arduino Header Pin Usage
@@ -91,19 +91,18 @@ Payload sent on both **periodic TX** and **PIR event trigger**:
 | 0 | `LPP_DIGITAL_INPUT` (0) | LED state | 1 byte | Downlink command | `0` = off, `1` = on |
 | 1 | `LPP_ANALOG_INPUT` (2) | Battery level | 2 bytes | `BoardGetBatteryLevel()` | `128` → 50% |
 | 2 | `LPP_TEMPERATURE` (103) | Temperature | 2 bytes | `BoardReadNtcTemperatureX10()` | `263` → 26.3°C |
-| 3 | `LPP_ANALOG_INPUT` (2) | Light level | 2 bytes | `BoardReadLdrLightLevel()` | `46` → 46% |
+| 3 | `LPP_LUMINOSITY` (101) | Raw ADC LDR | 2 bytes | `BoardReadLdrRawAdc()` | `0–4095` raw ADC (no conversion) |
 | 4 | `LPP_PRESENCE` (102) | Motion detected | 1 byte | `BoardReadPirMotion()` | `1` = motion, `0` = none |
 
 ### Example JSON Output (from ChirpStack)
 
 ```json
 {
-  "analogInput": {
-    "1": 128,
-    "3": 46
-  },
   "digitalInput": {
     "0": 0
+  },
+  "illuminanceSensor": {
+    "3": 49
   },
   "presenceSensor": {
     "4": 1
@@ -120,7 +119,7 @@ Payload sent on both **periodic TX** and **PIR event trigger**:
 00 00        ← Ch0: DIGITAL_INPUT = 0 (LED off)
 02 80 00     ← Ch1: ANALOG_INPUT = 128 (battery 50%)
 67 01 07     ← Ch2: TEMPERATURE = 26.3°C (0x0107 × 0.1)
-03 2E 00     ← Ch3: ANALOG_INPUT = 46 (light 46%)
+03 31 00     ← Ch3: LUMINOSITY = 49 raw ADC (0x0031)
 66 01        ← Ch4: PRESENCE = 1 (motion detected)
 ```
 
