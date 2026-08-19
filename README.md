@@ -69,7 +69,7 @@ This project is a bare-metal LoRaWAN end-device firmware running on an STM32L152
 | `A0`  | `PA_0`  | CN8-1  | RADIO_RESET | ✓ (in use) |
 | `A1`  | `PA_1`  | CN8-2  | LDR Light | ✓ (in use) |
 | `A2`  | `PA_4`  | CN8-3  | NTC Temperature (ADC4) | ✓ (in use) |
-| `A3`  | `PB_0`  | CN8-4  | *Unused* — `RADIO_XTAL_SEL` & `RADIO_DBG_PIN_TX` (SX1276MB1LAS) are dead code in this config | ✓ (potentially ADC-capable) |
+| `A3`  | `PB_0`  | CN8-4  | _UNUSED_ | ✗ |
 | `A4`  | `PC_1`  | CN8-5  | SX1276 ANT_SW | ✓ (in use) |
 | `A5`  | `PC_0`  | CN8-6  | LED_RX | ✓ (in use) |
 | `D14` | `PB_9`  | CN5-9  | _UNUSED_ | ✗ |
