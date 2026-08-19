@@ -26,50 +26,56 @@ This project is a bare-metal LoRaWAN end-device firmware running on an STM32L152
 - **Class A** default with **Class B** clock-sync support
 - **AS923** regional parameters (changeable to EU868, US915, etc.)
 - Ultra-low power STM32L152 (Cortex-M3, sub-µA sleep current)
-- **3 Grove sensors:** PIR Motion (PA4), LDR Light (PA1), NTC Temperature (PC1)
+- **3 Grove sensors:** PIR Motion (PA4/A2), LDR Light (PA1/A1), NTC Temperature (D6/PB10)
 - Dual-bank 512 KB flash with runtime firmware version tracking
 
 ---
 
 ## 🛠️ Hardware
 
-### MCU & Radio
+### Board & Radio Module
 
 | Component | Part |
 |-----------|------|
-| **MCU** | STM32L152RET6 (Cortex-M3, 512 KB Flash, 120 KB RAM) |
-| **Radio** | SX1276MB1LAS breakout (SX1276, AS923 868 MHz) |
-| **Debugger** | ST-LINK/V2 (on-board) |
-| **Board** | STM32L152RE-Nucleo-64 |
+| **Board** | STMicroelectronics **Nucleo-L152RE** — STM32L152RET6 (Cortex-M3, 512 KB Flash, 120 KB RAM), Arduino-compatible header, on-board ST-LINK/V2 debugger |
+| **Radio Shield** | Semtech **SX1276MB1LAS LoRa Shield** |
 
-### Grove Sensors (3 modules)
+### Grove Sensors (3 modules on Arduino header)
 
-| Sensor | Module | Pin | ADC Channel | LPP Type | Description |
-|--------|--------|-----|-------------|----------|-------------|
-| **PIR Motion** | Grove - PIR Motion Sensor | `PA_4` | — (EXTI4) | `LPP_PRESENCE` (102) | Motion detection, triggers TX on event |
-| **LDR Light** | Grove - Light Sensor | `PA_1` | `ADC_CHANNEL_1` (1) | `LPP_ANALOG_INPUT` (2) | Ambient light level (0-100%) |
-| **NTC Temperature** | Grove - Temperature Sensor V1.2 | `PC_1` | `ADC_CHANNEL_14` (14) | `LPP_TEMPERATURE` (103) | Temperature in °C (Seeed formula) |
+| Sensor | Module | Arduino Pin | MCU Pin | ADC / Ext | LPP Type | Description |
+|--------|--------|-------------|---------|-----------|----------|-------------|
+| **PIR Motion** | Grove - PIR Motion Sensor | `A2` | `PA_4` | EXTI4 (rising) | `LPP_PRESENCE` (102) | Motion detection, triggers TX on event |
+| **LDR Light** | Grove - Light Sensor | `A1` | `PA_1` | `ADC_CHANNEL_1` | `LPP_ANALOG_INPUT` (2) | Ambient light level (0-100%) |
+| **NTC Temperature** | Grove - Temperature Sensor V1.2 | `D6` | `PB_10` | `ADC_CHANNEL_11` | `LPP_TEMPERATURE` (103) | Temperature in °C (Seeed formula) |
 
-### Pin Mapping
+### Arduino Header Pin Usage
 
-| Peripheral | Pin | Function |
-|------------|-----|----------|
-| SPI1_SCK | PA5 | SX1276 SPI clock |
-| SPI1_MISO | PA6 | SX1276 SPI MISO |
-| SPI1_MOSI | PA7 | SX1276 SPI MOSI |
-| SX1276_NSS | PB6 | SPI select |
-| SX1276_DIO0 | PA10 | IRQ0 (TX/RX) |
-| SX1276_DIO1 | PB3 | IRQ1 (DIO1) |
-| SX1276_DIO5 | PC7 | IRQ5 (DIO5) |
-| UART2_TX | PA2 | Console (921600 baud) |
-| UART2_RX | PA3 | Console |
-| **NTC_TEMP** | **PC1** | **ADC14 - Grove Temp V1.2** |
-| **LDR_LIGHT** | **PA1** | **ADC1 - Grove Light Sensor** |
-| **PIR_MOTION** | **PA4** | **EXTI4 - Grove PIR Sensor** |
-| LED1 | PC1 | TX indicator *(shared with NTC - see note)* |
-| LED2 | PC0 | RX indicator |
+| Pin | MCU Pin | Connector | Function |
+|-----|---------|-----------|----------|
+| `D0`  | `PA_3`  | CN9-2 | UART2_RX |
+| `D1`  | `PA_2`  | CN9-1 | UART2_TX |
+| `D2`  | `PA_10` | CN9-3 | SX1276 DIO0 |
+| `D3`  | `PB_3`  | CN9-5 | SX1276 DIO1 |
+| `D4`  | `PB_5`  | CN9-7 | SX1276 DIO2 |
+| `D5`  | `PB_4`  | CN9-9 | SX1276 DIO3 |
+| `D6`  | `PB_10` | CN9-11 | NTC Temp (ADC11 / EXTI10 / TIM2_CH3) |
+| `D7`  | `PA_8`  | CN9-13 | _UNUSED — EXTI8 / TIM1_CH1_ |
+| `D8`  | `PA_9`  | CN5-1 | SX1276 DIO4 |
+| `D9`  | `PC_7`  | CN5-2 | SX1276 DIO5 |
+| `D10` | `PB_6`  | CN5-3 | SX1276 NSS |
+| `D11` | `PA_7`  | CN5-4 | SPI1_MOSI |
+| `D12` | `PA_6`  | CN5-5 | SPI1_MISO |
+| `D13` | `PA_5`  | CN5-6 | SPI1_SCK |
+| `A0`  | `PA_0`  | CN8-1 | RADIO_RESET |
+| `A1`  | `PA_1`  | CN8-2 | LDR Light |
+| `A2`  | `PA_4`  | CN8-3 | PIR Motion (EXTI) |
+| `A3`  | `PB_0`  | CN8-4 | SX1276 DBG_TX |
+| `A4`  | `PC_1`  | CN8-5 | SX1276 ANT_SW |
+| `A5`  | `PC_0`  | CN8-6 | LED_RX |
+| `D14` | `PB_9`  | CN5-9 | _UNUSED_ |
+| `D15` | `PB_8`  | CN5-10 | _UNUSED_ |
 
-> **Note:** LED1 is mapped to `PC1` on this board, which conflicts with NTC sensor. The NTC sensor takes priority during ADC read. LED1 functionality may need to be reassigned to another GPIO if both are needed simultaneously.
+> **Note:** NTC connected to **D6** (`PB_10`, Arduino header). Sensor connections: LDR=`A1`, PIR=`A2`. A3=DBG_TX, A4=ANT_SW, A5=LED_RX (radio). Unused pins **D7**, **D14**, and **D15** available for user use.
 
 ---
 
@@ -138,7 +144,7 @@ float temperature = 1.0f / (log(rNtc / NTC_R_NOMINAL) / NTC_BETA + (1.0f / 298.1
 ```
 VDD (3.3V) ───┬─── NTC (Grove module)
               │
-              ├─── PC1 (ADC input)
+              ├─── PB_10 (ADC input)  ← Arduino D6 header pin
               │
 R_pullup(10k) ─┴─── GND
 ```
@@ -148,7 +154,7 @@ R_pullup(10k) ─┴─── GND
 ### Calibration Notes
 
 - Verified reading: **26.3°C** at ambient room temperature
-- ADC raw value typically: **~1750-2100** (depends on temperature)
+- ADC raw value typically: **~1750–2100** (depends on temperature)
 - If readings are off, adjust `NTC_ATTENUATION_FACTOR` (currently set to 1.0)
 
 ---
