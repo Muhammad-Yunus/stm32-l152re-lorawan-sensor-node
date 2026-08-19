@@ -46,7 +46,7 @@ This project is a bare-metal LoRaWAN end-device firmware running on an STM32L152
 |--------|--------|-------------|---------|-----------|----------|-------------|--------|
 | **PIR Motion** | Grove - PIR Motion Sensor | `D6` | `PB_10` | `EXTI10` (rising) | `LPP_PRESENCE` (102) | Motion detection, triggers TX on event | ✅ Working |
 | **LDR Light** | Grove - Light Sensor | `A1` | `PA_1` | `ADC_CHANNEL_1` | `LPP_ANALOG_INPUT` (2) | Ambient light level (0–100%) | ✅ Working |
-| **NTC Temperature** | Grove - Temperature Sensor V1.2 | `A2` | `PA_4` | `ADC_CHANNEL_4` | `LPP_TEMPERATURE` (103) | Temperature in °C (Seeed formula) | ✅ Working (hardware swapped) |
+| **NTC Temperature** | Grove - Temperature Sensor V1.2 | `A2` | `PA_4` | `ADC_CHANNEL_4` | `LPP_TEMPERATURE` (103) | Temperature in °C (Seeed formula) | ✅ Working |
 
 > ⚠️ **NTC Temperature pin note:** Hardware swapped from original plan — NTC now wired to Arduino `A2` (`PA_4`, ADC_CHANNEL_4). Original plan used `D6` (`PB_10`) but **`PB_10` is not ADC-capable on STM32L152RE**. PIR motion sensor moved to `D6` (`PB_10`) as digital input via EXTI10.
 
