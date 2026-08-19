@@ -5,6 +5,9 @@
 
 <div align="center">
 
+> Low-power LoRaWAN sensor node firmware for **STM32L152RE** + **SX1276** radio, targeting **AS923** region.
+> Built on [Semtech's LoRaMac-node](https://github.com/Lora-net/LoRaMac-node) stack.
+
 [![LoRaWAN](https://img.shields.io/badge/LoRaWAN-1.0.x-blue?logo=semtech)](https://lora-alliance.org/)
 [![Region](https://img.shields.io/badge/Region-AS923-green)](#)
 [![MCU](https://img.shields.io/badge/MCU-STM32L152RE-orange)](#)
