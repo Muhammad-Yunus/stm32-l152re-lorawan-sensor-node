@@ -89,7 +89,7 @@ This project is a bare-metal LoRaWAN end-device firmware running on an STM32L152
 | 0 | `LPP_DIGITAL_INPUT` (0) | LED state (0/1) | 1 byte | Downlink command |
 | 1 | `LPP_ANALOG_INPUT` (2) | Battery level (0-254 → ×100) | 2 bytes | `BoardGetBatteryLevel()` |
 | 2 | `LPP_TEMPERATURE` (103) | Temperature × 10 (°C) | 2 bytes | `BoardReadNtcTemperatureX10()` |
-| 3 | `LPP_ANALOG_INPUT` (2) | Light level (0-100) | 2 bytes | `BoardReadLdrLightLevel()` |
+| 3 | `LPP_ANALOG_INPUT` (2) | Raw ADC (0-4095) | 2 bytes | `BoardReadLdrRawAdc()` |
 
 ### Example JSON Output (from ChirpStack)
 
