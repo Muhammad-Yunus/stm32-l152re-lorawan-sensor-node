@@ -91,7 +91,7 @@ Payload sent on both **periodic TX** and **PIR event trigger**:
 | 0 | `LPP_DIGITAL_INPUT` (0) | LED state | 1 byte | Downlink command | `0` = off, `1` = on |
 | 1 | `LPP_ANALOG_INPUT` (2) | Battery level | 2 bytes | `BoardGetBatteryLevel()` | `128` → 50% |
 | 2 | `LPP_TEMPERATURE` (103) | Temperature | 2 bytes | `BoardReadNtcTemperatureX10()` | `263` → 26.3°C |
-| 3 | `LPP_ANALOG_INPUT` (2) | LDR raw ADC | 2 bytes | `BoardReadLdrRawAdc()` | `46` → raw value |
+| 3 | `LPP_ANALOG_INPUT` (2) | Light level | 2 bytes | `BoardReadLdrLightLevel()` | `46` → 46% |
 | 4 | `LPP_PRESENCE` (102) | Motion detected | 1 byte | `BoardReadPirMotion()` | `1` = motion, `0` = none |
 
 ### Example JSON Output (from ChirpStack)
@@ -120,7 +120,7 @@ Payload sent on both **periodic TX** and **PIR event trigger**:
 00 00        ← Ch0: DIGITAL_INPUT = 0 (LED off)
 02 80 00     ← Ch1: ANALOG_INPUT = 128 (battery 50%)
 67 01 07     ← Ch2: TEMPERATURE = 26.3°C (0x0107 × 0.1)
-03 00 2E     ← Ch3: ANALOG_INPUT = 46 (LDR raw ADC)
+03 2E 00     ← Ch3: ANALOG_INPUT = 46 (light 46%)
 66 01        ← Ch4: PRESENCE = 1 (motion detected)
 ```
 
