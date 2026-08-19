@@ -117,6 +117,19 @@ This project is a bare-metal LoRaWAN end-device firmware running on an STM32L152
 03 02 0E D8 ← Ch3: ANALOG_INPUT = 38 (light 38%)
 ```
 
+### PIR Event-Based Transmission
+
+PIR sensor (`D6` / `PB_10`) triggers **immediate uplink** on motion detection via EXTI10 rising edge interrupt:
+
+| Aspect | Detail |
+|--------|--------|
+| **Interrupt** | `EXTI10` on `PB_10` (rising edge) |
+| **Action** | Set `IsTxFramePending = 1` |
+| **Result** | Next loop iteration sends full payload (same as periodic TX) |
+| **LPP Type** | `LPP_PRESENCE` (102) — not yet in payload (future: channel 4) |
+
+> **Note:** PIR currently only triggers TX. Motion status (`LPP_PRESENCE`) will be added to payload in future update.
+
 ---
 
 ## 📐 NTC Temperature Sensor Calibration
