@@ -99,6 +99,20 @@ uint8_t CayenneLppAddAnalogInput( uint8_t channel, float value )
     return CayenneLppCursor;
 }
 
+uint8_t CayenneLppAddAnalogInputRaw( uint8_t channel, uint16_t value )
+{
+    if( ( CayenneLppCursor + LPP_ANALOG_INPUT_SIZE ) > CAYENNE_LPP_MAXBUFFER_SIZE )
+    {
+        return 0;
+    }
+    CayenneLppBuffer[CayenneLppCursor++] = channel;
+    CayenneLppBuffer[CayenneLppCursor++] = LPP_ANALOG_INPUT;
+    CayenneLppBuffer[CayenneLppCursor++] = value >> 8;
+    CayenneLppBuffer[CayenneLppCursor++] = value;
+
+    return CayenneLppCursor;
+}
+
 uint8_t CayenneLppAddAnalogOutput( uint8_t channel, float value )
 {
     if( ( CayenneLppCursor + LPP_ANALOG_OUTPUT_SIZE ) > CAYENNE_LPP_MAXBUFFER_SIZE )

@@ -66,6 +66,7 @@ uint8_t CayenneLppAddDigitalInput( uint8_t channel, uint8_t value );
 uint8_t CayenneLppAddDigitalOutput( uint8_t channel, uint8_t value );
 
 uint8_t CayenneLppAddAnalogInput( uint8_t channel, float value );
+uint8_t CayenneLppAddAnalogInputRaw( uint8_t channel, uint16_t value );
 uint8_t CayenneLppAddAnalogOutput( uint8_t channel, float value );
 
 uint8_t CayenneLppAddLuminosity( uint8_t channel, uint16_t lux );

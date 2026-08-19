@@ -457,8 +457,8 @@ static void PrepareTxFrame( void )
     CayenneLppAddDigitalInput( channel++, AppLedStateOn );
     CayenneLppAddAnalogInput(  channel++, BoardGetBatteryLevel( ) * 100 / 254 );
     CayenneLppAddTemperature(  channel++, ( float )BoardReadNtcTemperatureX10( ) / 10.0f );
-    /* Send raw ADC as analog input */
-    CayenneLppAddAnalogInput( channel++, ( float )BoardReadLdrRawAdc() );
+    /* Send raw ADC LDR (0-4096) as analog input */
+    CayenneLppAddAnalogInputRaw( channel++, BoardReadLdrRawAdc() );
     /* Send PIR motion status as presence */
     CayenneLppAddPresence( channel++, BoardReadPirMotion() );
     /* Read LDR multiple times for debug */
