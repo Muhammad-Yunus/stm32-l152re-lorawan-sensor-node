@@ -23,6 +23,7 @@
 #include "stm32l1xx.h"
 #include <math.h>
 #include "utilities.h"
+#include "delay-board.h"
 #include "gpio-board.h"
 #include "gpio.h"
 #include "adc.h"
@@ -154,6 +155,7 @@ void BoardInitMcu( void )
 
     AdcInit( &Adc, NC );  // Just initialize ADC
     BoardInitPirSensor( );
+    BoardInitBuzzer( );
 
 #if defined( SX1261MBXBAS ) || defined( SX1262MBXCAS ) || defined( SX1262MBXDAS )
     SpiInit( &SX126x.Spi, SPI_1, RADIO_MOSI, RADIO_MISO, RADIO_SCLK, NC );
@@ -341,6 +343,8 @@ int16_t BoardGetTemperature( void )
 static Gpio_t NtcAdcPin;
 static Gpio_t LdrAdcPin;
 static Gpio_t PirMotion;
+static Gpio_t Buzzer;
+volatile uint8_t IsBeepPending = 0;
 
 /*!
  * PIR motion EXTI callback — sets transmit pending flag
@@ -349,12 +353,46 @@ static void PirMotionIsr( void* context )
 {
     extern volatile uint8_t IsTxFramePending;
     IsTxFramePending = 1;
+    IsBeepPending = 1;
 }
 
 void BoardInitPirSensor( void )
 {
     GpioInit( &PirMotion, SENSOR_PIR_MOTION_PIN, PIN_INPUT, PIN_PUSH_PULL, PIN_NO_PULL, 0 );
     GpioMcuSetInterrupt( &PirMotion, IRQ_RISING_EDGE, IRQ_LOW_PRIORITY, PirMotionIsr );
+}
+
+#define BUZZER_BEEP_ON_MS     50U    /* each beep sounds for 50ms */
+#define BUZZER_BEEP_OFF_MS    50U    /* gap between beeps            */
+
+static void BuzzerToggleLoop( uint32_t ms )
+{
+    uint32_t end = HAL_GetTick() + ms;
+    while( HAL_GetTick() < end )
+    {
+        GpioToggle( &Buzzer );
+        /* ~100us busy-wait → produces ~2-3 kHz tone through passive buzzer */
+        volatile uint32_t d = 300UL;
+        while( d-- );
+    }
+    GpioWrite( &Buzzer, 0 );
+}
+
+void BoardBeepBuzzer( void )
+{
+    for( uint8_t i = 0; i < 3; i++ )
+    {
+        BuzzerToggleLoop( BUZZER_BEEP_ON_MS );
+        if( i < 2 )
+        {
+            DelayMsMcu( BUZZER_BEEP_OFF_MS );
+        }
+    }
+}
+
+void BoardInitBuzzer( void )
+{
+    GpioInit( &Buzzer, SENSOR_BUZZER_PIN, PIN_OUTPUT, PIN_PUSH_PULL, PIN_NO_PULL, 0 );
 }
 
 /* Debug: read PIR motion sensor state */

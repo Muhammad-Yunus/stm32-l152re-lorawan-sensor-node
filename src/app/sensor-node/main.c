@@ -247,6 +247,7 @@ static volatile uint32_t TxPeriodicity = 0;
  */
 extern Gpio_t Led1; // Tx
 extern Gpio_t Led2; // Rx
+extern volatile uint8_t IsBeepPending;
 
 /*!
  * UART object used for command line interface handling
@@ -502,12 +503,19 @@ static void StartTxProcess( LmHandlerTxEvents_t txEvent )
 static void UplinkProcess( void )
 {
     uint8_t isPending = 0;
+    uint8_t beepPending = 0;
     CRITICAL_SECTION_BEGIN( );
     isPending = IsTxFramePending;
+    beepPending = IsBeepPending;
     IsTxFramePending = 0;
+    IsBeepPending = 0;
     CRITICAL_SECTION_END( );
     if( isPending == 1 )
     {
+        if( beepPending == 1 )
+        {
+            BoardBeepBuzzer( );
+        }
         PrepareTxFrame( );
     }
 }

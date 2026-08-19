@@ -134,6 +134,7 @@ extern "C"
 #define SENSOR_NTC_TEMP_PIN                        PA_4   /* ADC_CHANNEL_4  (Arduino A2) */
 #define SENSOR_LDR_LIGHT_PIN                       PA_1   /* ADC_CHANNEL_1  (Arduino A1) */
 #define SENSOR_PIR_MOTION_PIN                      PB_10  /* EXTI10         (Arduino D6) */
+#define SENSOR_BUZZER_PIN                          PA_8   /* Grove Buzzer (Arduino D7, CN9-13) */
 
 /*!
  * Steinhart-Hart NTC parameters (Seeed Studio Grove Temperature Sensor V1.1)

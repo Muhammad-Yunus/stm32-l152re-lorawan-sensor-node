@@ -59,7 +59,7 @@ This project is a bare-metal LoRaWAN end-device firmware running on an STM32L152
 | `D4`  | `PB_5`  | CN9-7  | SX1276 DIO2 | ✗ |
 | `D5`  | `PB_4`  | CN9-9  | SX1276 DIO3 | ✗ |
 | `D6`  | `PB_10` | CN9-11 | PIR Motion (EXTI10) | ✓ (in use) |
-| `D7`  | `PA_8`  | CN9-13 | _UNUSED — EXTI8 / TIM1_CH1_ | ✗ |
+| `D7`  | `PA_8`  | CN9-13 | Grove Buzzer (GPIO OUT) | ✓ (in use) |
 | `D8`  | `PA_9`  | CN5-1  | SX1276 DIO4 | ✗ |
 | `D9`  | `PC_7`  | CN5-2  | SX1276 DIO5 | ✗ |
 | `D10` | `PB_6`  | CN5-3  | SX1276 NSS | ✗ |

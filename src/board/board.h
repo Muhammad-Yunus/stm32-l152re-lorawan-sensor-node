@@ -131,6 +131,8 @@ uint16_t BoardReadNtcRawAdc( void );
 uint16_t BoardReadLdrRawAdc( void );
 uint8_t BoardReadPirMotion( void );
 void    BoardInitPirSensor( void );
+void    BoardInitBuzzer( void );
+void    BoardBeepBuzzer( void );
 
 #ifdef __cplusplus
 }
