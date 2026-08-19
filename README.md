@@ -136,18 +136,24 @@ PIR sensor (`D6` / `PB_10`) triggers **immediate uplink** on motion detection vi
 
 ### Seeed Grove Temperature Sensor V1.2 Formula
 
-Based on official [Seeed Studio Documentation](https://wiki.seeedstudio.com/Grove-Temperature_Sensor_V1.2/):
+User-corrected formula for **Grove Temperature Sensor V1.2** (NTC: NCP18WF104F03RC, 100kΩ @ 25°C):
 
 ```c
-// Parameters
-#define NTC_R_NOMINAL    10000.0f   // 10kΩ internal pull-up resistor
-#define NTC_BETA       4275.0f      // Beta coefficient (K)
-#define NTC_T_NOMINAL_C   25.0f     // Nominal temperature (°C)
+// Parameters (src/board/board-config.h)
+#define NTC_R_NOMINAL        10000.0f   // 10kΩ NTC at T_NOMINAL_C
+#define NTC_BETA             4275.0f    // Beta coefficient (K)
+#define NTC_T_NOMINAL_C      25.0f      // Nominal temperature (°C)
+#define NTC_R_PULLUP         10000.0f   // 10kΩ pull-up resistor
+#define NTC_ATTENUATION_FACTOR 1.0f     // Direct voltage divider (no op-amp)
 
-// Calculation
-float adcEffective = (float)adcRaw;  // No attenuation factor (direct voltage divider)
-float rNtc = NTC_R_PULLUP * ((4095.0f / adcEffective) - 1.0f);
-float temperature = 1.0f / (log(rNtc / NTC_R_NOMINAL) / NTC_BETA + (1.0f / 298.15f)) - 273.15f;
+// Calculation (src/board/board.c)
+float adcEffective = (float)adcRaw * NTC_ATTENUATION_FACTOR;
+if( adcEffective > 4095.0f ) { adcEffective = 4095.0f; }
+float rNtc  = NTC_R_PULLUP * ( ( 4095.0f / adcEffective ) - 1.0f );
+float lnRatio = logf( rNtc / NTC_R_NOMINAL );
+float invT    = ( 1.0f / ( NTC_T_NOMINAL_C + 273.15f ) ) + ( lnRatio / NTC_BETA );
+float tempC   = ( 1.0f / invT ) - 273.15f;
+return (int16_t)(tempC * 10.0f);  // Return ×10 for integer precision
 ```
 
 ### Sensor Wiring
