@@ -457,7 +457,7 @@ static void PrepareTxFrame( void )
     CayenneLppAddDigitalInput( channel++, AppLedStateOn );
     CayenneLppAddAnalogInput(  channel++, BoardGetBatteryLevel( ) * 100 / 254 );
     CayenneLppAddTemperature(  channel++, ( float )BoardReadNtcTemperatureX10( ) / 10.0f );
-    /* Send light level (0-100%) as analog input - prevents int16 overflow */
+    /* Send light level (0-100%) as analog input */
     CayenneLppAddAnalogInput(  channel++, ( float )BoardReadLdrLightLevel( ) );
     /* Send PIR motion status as presence */
     CayenneLppAddPresence( channel++, BoardReadPirMotion() );
