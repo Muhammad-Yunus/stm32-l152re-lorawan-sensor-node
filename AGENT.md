@@ -36,7 +36,7 @@ Agent-focused development reference for this firmware project. Covers code struc
 | Sensor | Arduino Pin | MCU Pin | Peripheral | LPP Type | Channel | Description |
 |--------|-------------|---------|------------|----------|---------|-------------|
 | **PIR Motion** | `D6` | `PB_10` | `EXTI10` (rising) | `LPP_PRESENCE` (102) | — | Grove PIR, triggers TX on motion |
-| **LDR Light** | `A1` | `PA_1` | `ADC_CHANNEL_1` | `LPP_ANALOG_INPUT` (2) | 3 | Grove Light Sensor, 0-100% |
+| **LDR Light** | `A1` | `PA_1` | `ADC_CHANNEL_1` | `LPP_LUMINOSITY` (101) | 3 | Grove Light Sensor, raw ADC 0-4095 (no conversion) |
 | **NTC Temperature** | `A2` | `PA_4` | `ADC_CHANNEL_4` | `LPP_TEMPERATURE` (103) | 2 | Seeed Grove V1.2, 10kΩ pull-up, B=4275 |
 
 ### Arduino Header Pin Usage
@@ -543,9 +543,9 @@ To further reduce power:
 5. **Serial: 921600 baud, not 115200** - Debug console uses UART2 at 921600-8-N-1.
 
 6. **CayenneLpp payload types**:
-   - `LPP_LUMINOSITY` (type 101) = uint16 lux (2 bytes)
-   - `LPP_ANALOG_INPUT` (type 2) = int16 x0.01 (2 bytes)
-   - Don't mix these up! Light sensor raw ADC needs proper scaling.
+   - `LPP_LUMINOSITY` (type 101) = uint16 raw (2 bytes) — used for LDR raw ADC 0-4095, no conversion
+   - `LPP_ANALOG_INPUT` (type 2) = int16 x0.01 (2 bytes) — battery level (% * 100)
+   - **Why LDR uses LUMINOSITY:** AANALOG_INPUT divides by 100 which overflows raw ADC (max 4095) → negative values. LUMINOSITY keeps raw ADC intact.
 
 7. **Never skip verification step** - After every code change, verify:
    - Build succeeds (check size output)
