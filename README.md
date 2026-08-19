@@ -282,17 +282,24 @@ stm32-l152re-lorawan-sensor-node/
     │       ├── CayenneLpp.[ch]  # LPP payload encoding
     │       ├── cli.[ch]         # Serial console (UART)
     │       ├── Commissioning.h  # DevEUI, JoinEUI, keys
-    │       ├── firmwareVersion.h
-    │       ├── LmHandler/       # LmHandler adaptor + packages
-    │       │   ├── LmHandler.c/.h
-    │       │   └── packages/    # ClockSync, Compliance, Fragmentation
-    │       └── NvmDataMgmt.[ch] # Persistent settings
+    │       ├── githubVersion.h  # GitHub build info
+    │       ├── LmHandlerMsgDisplay.[ch]  # Debug message display
+    │       ├── NvmDataMgmt.[ch] # Persistent settings
+    │       └── LmHandler/       # LmHandler adaptor + packages
+    │           ├── LmHandler.c/.h
+    │           └── packages/
+    │               ├── LmhpClockSync.[ch]    # Class B clock sync
+    │               ├── LmhpCompliance.[ch]   # Periodic TX compliance
+    │               ├── LmhpFragmentation.[ch]# Large payload fragmentation
+    │               ├── LmhpRemoteMcastSetup.[ch]  # Remote multicast setup
+    │               └── FragDecoder.[ch]      # Fragmentation decoder
     ├── board/                   # Board support package (BSP)
     │   ├── board.[ch]           # Board init (clocks, pins, peripherals)
     │   ├── board-config.h       # Hardware config macros
     │   ├── cmsis/               # CMSIS + HAL headers & startup
     │   ├── hal/                 # STM32L1xx HAL drivers
-    │   └── *.board.[ch]         # SPI, UART, I2C, GPIO, ADC, RTC, LPm
+    │   ├── sx1276mb1las-board.c # SX1276 board wrapper (IRQ, reset, SPI)
+    │   └── *.board.[ch]         # SPI, UART, I2C, GPIO, ADC, RTC, LPM
     ├── mac/                     # LoRaMAC protocol stack
     │   ├── LoRaMac*.c/h         # Core MAC layer
     │   └── region/
@@ -301,12 +308,15 @@ stm32-l152re-lorawan-sensor-node/
     │       └── RegionAS923.c    # AS923 frequency plan
     ├── peripherals/
     │   └── soft-se/             # Software Secure Element
-    │       ├── soft-se.[ch]     # AES-128 / CMAC-128
+    │       ├── soft-se.[ch]     # Main SE interface
+    │       ├── aes.[ch]         # AES-128 implementation
+    │       ├── cmac.[ch]        # CMAC-128 implementation
     │       ├── se-identity.h    # Device credentials (DevEUI, keys)
     │       └── soft-se-hal.[ch] # SE HAL interface
     └── radio/
-        ├── sx1276.[ch]          # SX1276 driver wrapper
-        └── sx1276/              # SX1276 register definitions
+        ├── sx1276.[ch]          # SX1276 register definitions
+        └── sx1276/
+            └── sx1276.h         # Register bit definitions
 ```
 
 ---
