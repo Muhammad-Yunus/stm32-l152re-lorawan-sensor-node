@@ -25,7 +25,7 @@ Agent-focused development reference for this firmware project. Covers code struc
 
 **Board:** STMicroelectronics **Nucleo-L152RE** — STM32L152RET6 (Cortex-M3, 512 KB Flash, 120 KB RAM), Arduino Uno v2 compatible header, on-board ST-LINK/V2 debugger
 **Radio Shield:** Semtech **SX1276MB1LAS LoRa Shield** — ⚠️ NO radio frequency selection pin (pin868/915MHz). Radio is fixed AS923 (868 MHz).
-**Sensors:** 3× Grove modules — PIR Motion (D6), LDR Light (A1), NTC Temp (A2)
+**Sensors:** 4× Grove modules — PIR Motion (D6), LDR Light (A1), NTC Temp (A2), Buzzer (D7)
 
 ---
 
@@ -35,9 +35,10 @@ Agent-focused development reference for this firmware project. Covers code struc
 
 | Sensor | Arduino Pin | MCU Pin | Peripheral | LPP Type | Channel | Description |
 |--------|-------------|---------|------------|----------|---------|-------------|
-| **PIR Motion** | `D6` | `PB_10` | `EXTI10` (rising) | `LPP_PRESENCE` (102) | — | Grove PIR, triggers TX on motion |
+| **PIR Motion** | `D6` | `PB_10` | `EXTI10` (rising) | `LPP_PRESENCE` (102) | — | Grove PIR, triggers TX + buzzer on motion |
 | **LDR Light** | `A1` | `PA_1` | `ADC_CHANNEL_1` | `LPP_LUMINOSITY` (101) | 3 | Grove Light Sensor, raw ADC 0-4095 (no conversion) |
 | **NTC Temperature** | `A2` | `PA_4` | `ADC_CHANNEL_4` | `LPP_TEMPERATURE` (103) | 2 | Seeed Grove V1.2, 10kΩ pull-up, B=4275 |
+| **Buzzer** | `D7` | `PA_8` | GPIO OUT | — | — | Grove Active Buzzer, 3-beep on PIR trigger (HIGH/LOW, 80ms) |
 
 ### Arduino Header Pin Usage
 
@@ -66,7 +67,7 @@ Agent-focused development reference for this firmware project. Covers code struc
 | `D14` | `PB_9`  | CN5-9 | _UNUSED_ |
 | `D15` | `PB_8`  | CN5-10 | _UNUSED_ |
 
-> **Note:** Sensor connections: NTC=`A2` (PA4, ADC4), PIR=`D6` (PB10, EXTI10), LDR=`A1` (PA1, ADC1). A3=DBG_TX, A4=ANT_SW, A5=LED_RX (radio). Unused pins **D14**, and **D15** available for user use.
+> **Note:** Sensor connections: NTC=`A2` (PA4, ADC4), PIR=`D6` (PB10, EXTI10), LDR=`A1` (PA1, ADC1), Buzzer=`D7` (PA8, GPIO OUT). A3=DBG_TX, A4=ANT_SW, A5=LED_RX (radio). Unused pins **D14**, and **D15** available for user use.
 
 ---
 
@@ -169,7 +170,9 @@ void BoardInitPirSensor( void )
 static void PirMotionIsr( void* context )
 {
     extern volatile uint8_t IsTxFramePending;
+    extern volatile uint8_t IsBeepPending;
     IsTxFramePending = 1;  // Trigger immediate TX
+    IsBeepPending = 1;     // Trigger 3-beep buzzer
 }
 ```
 
@@ -418,6 +421,7 @@ CHANNEL MASK: 0003
 | **LDR_LIGHT** | **PA1** | **`A1`** | **ADC_CHANNEL_1** |
 | **NTC_TEMP** | **PA4** | **`A2`** | **ADC_CHANNEL_4** |
 | **PIR_MOTION** | **PB10** | **`D6`** | **EXTI10** |
+| **BUZZER** | **PA8** | **`D7`** | **GPIO OUT (Active Buzzer)** |
 
 ### Key board-config macros (`src/board/board-config.h`)
 
@@ -539,6 +543,7 @@ To further reduce power:
    - LDR → PA_1 → ADC_CHANNEL_1 (A1 pin on Arduino header)
    - NTC → PA_4 → ADC_CHANNEL_4 (A2 pin)
    - PIR → PB_10 → EXTI10 (D6 pin)
+   - Buzzer → PA_8 → GPIO OUT (D7 pin) — active buzzer, HIGH=ON LOW=OFF, no PWM/toggle
 
 5. **Serial: 921600 baud, not 115200** - Debug console uses UART2 at 921600-8-N-1.
 
@@ -553,3 +558,5 @@ To further reduce power:
    - Uplink frames contain expected data
 
 8. **Git history management** - Clean commits only. Never force push. Use conventional commits: `fix:`, `feat:`, `docs:`, `refactor:`.
+
+9. **Buzzer warning** - Grove Active Buzzer (D7/PA_8) does NOT support PWM/toggle. Use `GpioWrite(&Buzzer, 1)` for ON and `GpioWrite(&Buzzer, 0)` for OFF with `DelayMsMcu()` between. Toggle high-frequency (~kHz) will make it inaudible.

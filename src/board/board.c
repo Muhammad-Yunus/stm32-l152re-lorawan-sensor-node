@@ -362,30 +362,19 @@ void BoardInitPirSensor( void )
     GpioMcuSetInterrupt( &PirMotion, IRQ_RISING_EDGE, IRQ_LOW_PRIORITY, PirMotionIsr );
 }
 
-#define BUZZER_BEEP_ON_MS     50U    /* each beep sounds for 50ms */
-#define BUZZER_BEEP_OFF_MS    50U    /* gap between beeps            */
-
-static void BuzzerToggleLoop( uint32_t ms )
-{
-    uint32_t end = HAL_GetTick() + ms;
-    while( HAL_GetTick() < end )
-    {
-        GpioToggle( &Buzzer );
-        /* ~100us busy-wait → produces ~2-3 kHz tone through passive buzzer */
-        volatile uint32_t d = 300UL;
-        while( d-- );
-    }
-    GpioWrite( &Buzzer, 0 );
-}
+#define BUZZER_BEEP_DUR_MS    80U    /* each beep duration           */
+#define BUZZER_PAUSE_DUR_MS   80U    /* gap between beeps            */
 
 void BoardBeepBuzzer( void )
 {
     for( uint8_t i = 0; i < 3; i++ )
     {
-        BuzzerToggleLoop( BUZZER_BEEP_ON_MS );
+        GpioWrite( &Buzzer, 1 );          /* active buzzer: HIGH = ON  */
+        DelayMsMcu( BUZZER_BEEP_DUR_MS );
+        GpioWrite( &Buzzer, 0 );          /* LOW = OFF                 */
         if( i < 2 )
         {
-            DelayMsMcu( BUZZER_BEEP_OFF_MS );
+            DelayMsMcu( BUZZER_PAUSE_DUR_MS );
         }
     }
 }

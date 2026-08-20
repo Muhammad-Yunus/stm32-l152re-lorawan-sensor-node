@@ -33,6 +33,7 @@ This project is a bare-metal LoRaWAN end-device firmware running on an STM32L152
 - **AS923** regional parameters (changeable to EU868, US915, etc.)
 - Ultra-low power STM32L152 (Cortex-M3, sub-µA sleep current)
 - **3 Grove sensors:** PIR Motion (PB10/D6), LDR Light (PA1/A1), NTC Temperature (PA4/A2)
+- **Grove Buzzer** on D7 (PA_8) — 3-beep "bep bep bep" on PIR motion trigger
 - Dual-bank 512 KB flash with runtime firmware version tracking
 
 ---
@@ -50,9 +51,10 @@ This project is a bare-metal LoRaWAN end-device firmware running on an STM32L152
 
 | Sensor | Module | Arduino Pin | MCU Pin | ADC / Ext | LPP Type | Description | Status |
 |--------|--------|-------------|---------|-----------|----------|-------------|--------|
-| **PIR Motion** | Grove - PIR Motion Sensor | `D6` | `PB_10` | `EXTI10` (rising) | `LPP_PRESENCE` (102) | Motion detection, triggers TX on event | ✅ Working |
+| **PIR Motion** | Grove - PIR Motion Sensor | `D6` | `PB_10` | `EXTI10` (rising) | `LPP_PRESENCE` (102) | Motion detection, triggers TX on event + buzzer alert | ✅ Working |
 | **LDR Light** | Grove - Light Sensor | `A1` | `PA_1` | `ADC_CHANNEL_1` | `LPP_LUMINOSITY` (101) | Raw ADC 0–4095 (no conversion) | ✅ Working |
 | **NTC Temperature** | Grove - Temperature Sensor V1.2 | `A2` | `PA_4` | `ADC_CHANNEL_4` | `LPP_TEMPERATURE` (103) | Temperature in °C (Seeed formula) | ✅ Working |
+| **Buzzer** | Grove - Buzzer (Active) | `D7` | `PA_8` | GPIO OUT | — | 3-beep "bep bep bep" on PIR trigger (HIGH/LOW, 80ms each) | ✅ Working |
 
 ### Arduino Header Pin Usage
 
@@ -138,7 +140,7 @@ PIR sensor (`D6` / `PB_10`) triggers **immediate uplink** on motion detection vi
 | Motion detected (rising edge on PB_10) | Set `IsTxFramePending = 1` | 5-channel payload with motion = 1 |
 | No motion | Timer-based periodic TX | 5-channel payload with motion = 0 |
 
-> **Note:** PIR status (`LPP_PRESENCE`) is now included in payload as channel 4. Both periodic and PIR-triggered TX send the same 5-channel payload.
+> **Note:** PIR status (`LPP_PRESENCE`) is now included in payload as channel 4. Both periodic and PIR-triggered TX send the same 5-channel payload. On PIR trigger, the Grove Buzzer on D7 also sounds 3 beeps (`BoardBeepBuzzer()`).
 
 ---
 
